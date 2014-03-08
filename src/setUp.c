@@ -1,5 +1,7 @@
 
 #include "turH.h"
+#include <libconfig.h>
+#include <string.h>
 
 static vectorField u;
 static vectorField u_host;
@@ -41,6 +43,20 @@ void setUp(void){
 }
 
 void starSimulation(void){
+  config_t config;
+  config_setting_t *read;
+  config_setting_t *write;
+  const char *str;
+
+  // Read configuration file
+  config_init(&config);
+  
+  if (! config_read_file(&config, "run.conf")){
+    fprintf(stderr, "%s:%d - %s\n", config_error_file(&config),
+            config_error_line(&config), config_error_text(&config));
+    config_destroy(&config);
+    return;
+  }
 
 	//Size 
 		
@@ -61,11 +77,16 @@ void starSimulation(void){
 	cudaCheck(cudaMalloc( (void**)&u.z,size),"malloc_t1");
 
 	//MPI COPY to nodes
+	read = config_lookup(&config, "application.read");
 	
-	
-	mpiCheck(read_parallel_float("./data_inicial/Usx.h5",(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
-	mpiCheck(read_parallel_float("./data_inicial/Usy.h5",(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read");
-	mpiCheck(read_parallel_float("./data_inicial/Usz.h5",(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read");
+	config_setting_lookup_string(read, "U", &str);
+	mpiCheck(read_parallel_float((char *)str,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
+
+	config_setting_lookup_string(read, "V", &str);
+	mpiCheck(read_parallel_float((char *)str,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read");
+
+	config_setting_lookup_string(read, "W", &str);
+	mpiCheck(read_parallel_float((char *)str,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read");
 	
 	//COPY to GPUs
 
@@ -89,7 +110,6 @@ void starSimulation(void){
 
 	//COPY to CPU
 
-	
 	cudaCheck(cudaMemcpy(u_host.x,u.x,size,cudaMemcpyDeviceToHost),"MemInfo1_B");
 	cudaCheck(cudaMemcpy(u_host.y,u.y,size,cudaMemcpyDeviceToHost),"MemInfo1_B");
 	cudaCheck(cudaMemcpy(u_host.z,u.z,size,cudaMemcpyDeviceToHost),"MemInfo1_B");
@@ -97,12 +117,18 @@ void starSimulation(void){
 
 	//MPI COPY to nodes
 	
+	write = config_lookup(&config, "application.write");
 	
-	mpiCheck(wrte_parallel_float("./data_inicial/Usx_w.h5",(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"write");
-	mpiCheck(wrte_parallel_float("./data_inicial/Usy_w.h5",(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"write");
-	mpiCheck(wrte_parallel_float("./data_inicial/Usz_w.h5",(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"write");
+	config_setting_lookup_string(write, "U", &str);
+	mpiCheck(wrte_parallel_float((char *)str,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"write");
 	
-
+	config_setting_lookup_string(write, "V", &str);
+	mpiCheck(wrte_parallel_float((char *)str,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"write");
+	
+	config_setting_lookup_string(write, "W", &str);
+	mpiCheck(wrte_parallel_float((char *)str,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"write");
+	
+	config_destroy(&config);
 
 return;
 

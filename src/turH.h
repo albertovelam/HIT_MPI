@@ -17,7 +17,7 @@
 
 
 
-#define NSS 128
+#define NSS 384
 
 typedef struct { float2* x;float2* y;float2* z;} vectorField;
 
