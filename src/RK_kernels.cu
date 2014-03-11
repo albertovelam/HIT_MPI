@@ -259,7 +259,8 @@ static void __global__ rk_substep_2(float2* ux,float2* uy,float2* uz,float2* rx,
 	r1=rx[h];
 	r2=ry[h];
 	r3=rz[h];
-		
+	
+	
 
 	if(h==0)kk=1.0f;
 		
