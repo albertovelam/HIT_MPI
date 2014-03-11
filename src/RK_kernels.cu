@@ -67,9 +67,13 @@ static void __global__ rk_substep_1(float2* ux,float2* uy,float2* uz,float2* u_w
 
 	//Forcing
 
+	
 	float M=u1.x*u1.x+u1.y*u1.y;
 	M+=u2.x*u2.x+u2.y*u2.y;
 	M+=u3.x*u3.x+u3.y*u3.y;
+
+	if(k!=0)
+	M=2.0f*M;
 
 	float Cforce=Cf/M;
 	if(kk<kf*kf){lap=lap+Cforce;}
@@ -173,6 +177,9 @@ static void __global__ rk_substep_05(float2* ux,float2* uy,float2* uz,float2* u_
 	float M=u1.x*u1.x+u1.y*u1.y;
 	M+=u2.x*u2.x+u2.y*u2.y;
 	M+=u3.x*u3.x+u3.y*u3.y;
+
+	if(k!=0)
+	M=2.0f*M;
 
 	float Cforce=Cf/M;
 	if(kk<kf*kf){lap=lap+Cforce;}

@@ -136,8 +136,12 @@ static float caclCf(float kf){
 
 		float kk=k1*k1+k2*k2+k3*k3;
 		
-		if(kk<kf*kf)
+		if(kk<kf*kf & k==0)
 		counter++;
+	
+		if(kk<kf*kf & k!=0)
+		counter+=2;
+		
 
 	}
 	}
