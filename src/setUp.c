@@ -101,12 +101,14 @@ void starSimulation(void){
 
 	//RK integration
 	
-	float time=10;
+	float time=(float) config_setting_get_float(config_lookup(&config,"application.time"));
 	int counter=0;
 	
 	counter=RK2step(u,&time);
-	
-	printf("\ncounter=%d\n",counter);
+
+	int mpierr = MPI_Barrier(MPI_COMM_WORLD);
+
+	if (RANK == 0){ printf("RK iterations finished.\n");}
 
 	//COPY to CPU
 
@@ -118,6 +120,8 @@ void starSimulation(void){
 	//MPI COPY to nodes
 	
 	write = config_lookup(&config, "application.write");
+
+	if (RANK == 0){ printf("Writing output.\n");}
 	
 	config_setting_lookup_string(write, "U", &str);
 	mpiCheck(wrte_parallel_float((char *)str,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"write");
@@ -128,6 +132,8 @@ void starSimulation(void){
 	config_setting_lookup_string(write, "W", &str);
 	mpiCheck(wrte_parallel_float((char *)str,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"write");
 	
+	if (RANK == 0){ printf("Nothing important left to do.\n");}
+
 	config_destroy(&config);
 
 return;
