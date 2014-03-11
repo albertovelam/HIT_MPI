@@ -43,20 +43,20 @@ void setUp(void){
 }
 
 void starSimulation(void){
-  config_t config;
-  config_setting_t *read;
-  config_setting_t *write;
-  const char *str;
-
-  // Read configuration file
-  config_init(&config);
+        config_t config;
+	config_setting_t *read;
+	config_setting_t *write;
+	const char *str;
+	
+	// Read configuration file
+	config_init(&config);
   
-  if (! config_read_file(&config, "run.conf")){
-    fprintf(stderr, "%s:%d - %s\n", config_error_file(&config),
-            config_error_line(&config), config_error_text(&config));
-    config_destroy(&config);
-    return;
-  }
+	if (! config_read_file(&config, "run.conf")){
+	  fprintf(stderr, "%s:%d - %s\n", config_error_file(&config),
+		  config_error_line(&config), config_error_text(&config));
+	  config_destroy(&config);
+	  return;
+	}
 
 	//Size 
 		

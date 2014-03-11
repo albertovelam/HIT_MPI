@@ -16,8 +16,9 @@
 #include <sys/time.h>
 
 
-
-#define NSS 384
+#ifndef NSS
+#define NSS 256
+#endif
 
 typedef struct { float2* x;float2* y;float2* z;} vectorField;
 
