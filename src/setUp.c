@@ -43,6 +43,7 @@ void setUp(void){
 }
 
 void starSimulation(void){
+
         config_t config;
 	config_setting_t *read;
 	config_setting_t *write;
@@ -101,6 +102,7 @@ void starSimulation(void){
 
 	//RK integration
 	
+
 	float time=(float) config_setting_get_float(config_lookup(&config,"application.time"));
 	int counter=0;
 	
