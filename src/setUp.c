@@ -43,6 +43,7 @@ void setUp(void){
 }
 
 void starSimulation(void){
+
         config_t config;
 	config_setting_t *read;
 	config_setting_t *write;
@@ -101,7 +102,7 @@ void starSimulation(void){
 
 	//RK integration
 	
-	float time=10;
+	float time=100;
 	int counter=0;
 	
 	counter=RK2step(u,&time);

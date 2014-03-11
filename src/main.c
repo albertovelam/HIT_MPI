@@ -39,8 +39,6 @@ int main(int argc, char *argv[])
 	//CUDA SET UP
 	setUp();
 	
-	float a[1];
-	printf("%d",a);
 
 	//start
 	starSimulation();

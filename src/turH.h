@@ -151,3 +151,7 @@ extern void routineCheck(vectorField t);
 extern void calc_E_kernel( vectorField u, float2* t);
 extern void calc_D_kernel( vectorField u, float2* t);
 
+//Forcing
+void calc_energy_shell(vectorField u,float2* t,int ks);
+
+

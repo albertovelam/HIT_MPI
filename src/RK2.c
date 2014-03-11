@@ -118,41 +118,27 @@ static float calcDt(vectorField uw,vectorField u){
 
 }
 
-static float caclCf(float kf){
+static float caclCf(vectorField u,float2* t,int kf)
+{
 
-	int counter;
-	for(int i=0;i<NX;i++){
-	for(int j=0;j<NY;j++){
-	for(int k=0;k<NZ;k++){
-				
-		// X indices		
-		float k1=i<NX/2 ? (float)i : (float)i-(float)NX ;
+	//conserving keta=2
 
-		// Y indice
-		float k2=j<NY/2 ? (float)j : (float)j-(float)NY ;
+	int kmax=sqrt(2.0f)*N/3.0f;
 
-		// Z indices
-		float k3=(float)k;	
-
-		float kk=k1*k1+k2*k2+k3*k3;
-		
-		if(kk<kf*kf & k==0)
-		counter++;
+	float energy;
 	
-		if(kk<kf*kf & k!=0)
-		counter+=2;
-		
+	calc_energy_shell(u,t,kf);	
 
-	}
-	}
-	}
-
-	counter-=1;
-
-	int kmax=sqrt(2.0f/3.0f)*N;
-	float Cf=pow(REYNOLDS,-3.0f)*pow(kmax/2.0f,4.0f)/counter;
+	energy=sumElements(t);
 	
+	//if(RANK==0){
+	//printf("\nenergy_shell=%f\n",energy/2.0f);
+	//};
 
+	float Cf=pow(REYNOLDS,-3.0f)*pow(kmax/2.0f,4.0f)/(energy);
+
+	
+	
 	return Cf;
 
 }
@@ -173,14 +159,16 @@ int RK2step(vectorField u,float* time)
 	int frec=2000;
 
 	int kf=2;
-	
-	//Calc forcing	
-	float Cf=caclCf(kf);
-	
+		
 	float dt=0.0f;
+	float Cf;	
+
 	//RK2 time steps	
 
 	while(time_elapsed < *time){
+
+	//Calc forcing	
+	Cf=caclCf(u,t1,kf);
 
 	//Initial dealiasing
 
@@ -222,6 +210,7 @@ int RK2step(vectorField u,float* time)
 	if(RANK==0){
 	printf("\nsimtime=%f",time_elapsed);
 	printf("\ncounter=%d",counter);
+	printf("\nCf=%f\n",Cf);
 	}
 
 	//Write to disc	

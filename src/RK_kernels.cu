@@ -68,16 +68,10 @@ static void __global__ rk_substep_1(float2* ux,float2* uy,float2* uz,float2* u_w
 	//Forcing
 
 	
-	float M=u1.x*u1.x+u1.y*u1.y;
-	M+=u2.x*u2.x+u2.y*u2.y;
-	M+=u3.x*u3.x+u3.y*u3.y;
-
-	if(k!=0)
-	M=2.0f*M;
-
-	float Cforce=Cf/M;
-	if(kk<kf*kf){lap=lap+Cforce;}
-	if(i+j+k==0){lap=0.0f;}		
+	kk=k1*k1+k2*k2+k3*k3;
+	lap=-kk/Re;
+	
+	if(kk<kf*kf){lap=lap+Cf;}
 
 	s_prod.x=r1.x*k1+r2.x*k2+r3.x*k3;
 	s_prod.y=r1.y*k1+r2.y*k2+r3.y*k3;
@@ -174,16 +168,10 @@ static void __global__ rk_substep_05(float2* ux,float2* uy,float2* uz,float2* u_
 
 	//Forcing
 
-	float M=u1.x*u1.x+u1.y*u1.y;
-	M+=u2.x*u2.x+u2.y*u2.y;
-	M+=u3.x*u3.x+u3.y*u3.y;
-
-	if(k!=0)
-	M=2.0f*M;
-
-	float Cforce=Cf/M;
-	if(kk<kf*kf){lap=lap+Cforce;}
-	if(i+j+k==0){lap=0.0f;}
+	kk=k1*k1+k2*k2+k3*k3;
+	lap=-kk/Re;
+	
+	if(kk<kf*kf){lap=lap+Cf;}
 
 	// u_w=dt*(u+gamma(i)*R
 		
