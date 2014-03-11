@@ -106,7 +106,7 @@ static float calcDt(vectorField uw,vectorField u){
 	printf("\n(eta,lamb)=(%f,%f)",eta,lambda);
 	printf("\nRl=%f",Rl);
 	printf("\netak=%f",eta*kmax);	
-	printf("\n************************");
+	printf("\n************************\n");
 	}
 
 		
@@ -192,7 +192,7 @@ int RK2step(vectorField u,float* time)
 	F(uw,r,Delta_1); 
 
 	dt=calcDt(uw,u);	
-	printf("\n%f\n",dt);
+	printf("dt = %f\n",dt);
 
 	RK_step_1(uw,u,r,REYNOLDS,dt,Cf,kf);
 
@@ -230,6 +230,8 @@ int RK2step(vectorField u,float* time)
 	free(Delta);
 	free(Delta_1);
 	free(Delta_2);
+
+	if (RANK == 0){ printf("RK iterations finished.");}
 
 	return counter;	
 	

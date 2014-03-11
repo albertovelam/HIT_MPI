@@ -19,6 +19,7 @@ int main(int argc, char *argv[])
 
 	//MPI initialize
 	MPI_Init(NULL,NULL);
+	H5open();
 		
 	MPI_Comm_size(MPI_COMM_WORLD, &SIZE);
  	MPI_Comm_rank(MPI_COMM_WORLD, &RANK);
@@ -43,7 +44,8 @@ int main(int argc, char *argv[])
 	//start
 	starSimulation();
 	
-	
+	H5close();
+	MPI_Finalize();
 
 return 0;
 
