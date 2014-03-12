@@ -143,7 +143,7 @@ static float caclCf(vectorField u,float2* t,int kf)
 
 }
 
-int RK2step(vectorField u,float* time)
+int RK2step(vectorField u,float* time, config_t *config)
 {
 	
 	static float time_elapsed=0.0f;
@@ -168,7 +168,12 @@ int RK2step(vectorField u,float* time)
 	while(time_elapsed < *time){
 
 	//Calc forcing	
-	Cf=caclCf(u,t1,kf);
+	  if (config_setting_get_bool(config_lookup(config,"application.forcing"))){
+	    Cf=caclCf(u,t1,kf);
+	  }
+	  else{
+	    Cf = 0.0;
+	  }   
 
 	//Initial dealiasing
 

@@ -1,6 +1,6 @@
-CC = mpic++
-NVCC = nvcc
-LD = mpic++
+CC = mpic++ -O3
+NVCC = nvcc -O3
+LD = mpic++ -O3
 LIBS = -lcudart -lcufft -lcublas -lcuda  -lstdc++ -lm -lhdf5  -lhdf5 -lhdf5_hl -lconfig
 PATHS = -L/opt/cuda/lib64/ -L/usr/lib64 -L/usr/lib
 INCLUDES = -I/opt/cuda/include
@@ -14,7 +14,7 @@ CPU_OBJECTS = $(CPU_SOURCES:.c=.o)
 
 
 all: $(GPU_OBJECTS) $(CPU_OBJECTS)
-	$(LD) $(DEBUG) -o hitMPI $(CPU_OBJECTS) $(GPU_OBJECTS) $(PATHS) $(LIBS)
+	$(LD) -o hitMPI $(CPU_OBJECTS) $(GPU_OBJECTS) $(PATHS) $(LIBS)
 
 $(CPU_OBJECTS): src/%.o: src/%.c
 	$(CC) -c $(INCLUDES) $(SIZE) $< -o $@
