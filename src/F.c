@@ -18,7 +18,6 @@ void copyVectorField(vectorField u1,vectorField u2){
 
 void F( vectorField u, vectorField r,float* Delta)
 {
-  double timer;
 	
 	// Calculate vorticity w and move u to u_w workarray	
 	// s -> u
@@ -38,15 +37,10 @@ void F( vectorField u, vectorField r,float* Delta)
 	
 	// Transform u to real space
 
-
-	timer = MPI_Wtime();
-
 	fftBackward(u.x);
 	fftBackward(u.y);
 	fftBackward(u.z);
 
-	printf("Time fftBackward: %f\n",MPI_Wtime()-timer);
-	timer = MPI_Wtime();
 
 	// Fill with zeros
 	

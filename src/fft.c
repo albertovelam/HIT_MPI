@@ -12,7 +12,7 @@ static float2* aux_host_2;
 
 static float2* sum;
 
-size_t size;
+static size_t size;
 
 
 static const int n_steps=16;

@@ -1,19 +1,32 @@
-/*
+
 #include "turH.h"
 
-static cufftHandle fft2_c2c; 
-static cufftHandle fft1_c2r; 
-static cufftHandle fft1_r2c; 
+static cufftHandle fft1_c2c; 
+static cufftHandle fft2_c2r; 
+static cufftHandle fft2_r2c; 
 
 static float2* aux_host_1;
 static float2* aux_host_2;
 
 static float2* sum;
 
-size_t size;
+static size_t size;
 
-int n_steps=16;
+static int n_steps=16;
+cudaStream_t* STREAMS;
 
+//Check
+
+static void cufftCheck( cufftResult error, const char* function )
+{
+	if(error != CUFFT_SUCCESS)
+	{
+		printf("\n error  %s : %d \n", function, error);
+		exit(1);
+	}
+		
+	return;
+}  
 
 void setfftAsync(void){
 
@@ -32,11 +45,11 @@ void setfftAsync(void){
 
 	//MALLOC STREAMS
 
-	cudaStream_t* STREAMS=(cudaStream_t*)malloc(sizeof(cudaStream_t)*NXSIZE));
+	STREAMS=(cudaStream_t*)malloc(sizeof(cudaStream_t)*NXSIZE/n_steps);
 	
 	//Set streams
 
-	for(int i=0;i<NXSIZE;i++)
+	for(int i=0;i<NXSIZE/n_steps;i++)
 	cudaStreamCreate(STREAMS+i); 
 
 	//MALLOC aux buffer host	
@@ -45,8 +58,8 @@ void setfftAsync(void){
 	
 	//MALLOC PINNED MEMORY TO ALLOW OVERLAPPING
 
-	cudaCheck(cudaMallocHost(aux_host_1,size),"malloc");
-	cudaCheck(cudaMallocHost(aux_host_2,size),"malloc");
+	cudaCheck(cudaMallocHost((void**)aux_host_1,size),"malloc");
+	cudaCheck(cudaMallocHost((void**)aux_host_2,size),"malloc");
 
 
 
@@ -55,7 +68,7 @@ void setfftAsync(void){
 void fftBack_Async_1D(float2* buffer_1,float2* buffer_host){
 
 	
-	for(int i=0;i<NXSIZE/nsteps;i++)
+	for(int i=0;i<NXSIZE/n_steps;i++)
 	{
 
 	//TRANSPOSE 
@@ -63,13 +76,13 @@ void fftBack_Async_1D(float2* buffer_1,float2* buffer_host){
 	
 	//FFT 1D
 
-	cufftCheck(cufftSetStream(cufftHandle plan,stream[i]),"SetStream");
-	cufftCheck(cufftExecC2C(fft1_c2c,buffer_1+i*NY*NZ*NXSIZE/n_steps,buffer_1+i*NY*NZ*NXSIZE/n_steps,CUFFT_BACKWARD),"forward transform");	
+	cufftCheck(cufftSetStream(fft1_c2c,STREAMS[i]),"SetStream");
+	cufftCheck(cufftExecC2C(fft1_c2c,buffer_1+i*NY*NZ*NXSIZE/n_steps,buffer_1+i*NY*NZ*NXSIZE/n_steps,CUFFT_INVERSE),"forward transform");	
 
 	//COPY		
 
 	//copy data from host to device memory asynchronously
-	cudaMemcpyAsync((float2*)buffer_host+i*NY*NZ*NXSIZE/n_steps,(float2*)buffer_1+i*NY*NZ*NXSIZE/n_steps,size/n_steps,cudaMemcpyDeviceToHost,stream[i]);
+	cudaMemcpyAsync((float2*)buffer_host+i*NY*NZ*NXSIZE/n_steps,(float2*)buffer_1+i*NY*NZ*NXSIZE/n_steps,size/n_steps,cudaMemcpyDeviceToHost,STREAMS[i]);
 
 	}
 
@@ -82,16 +95,16 @@ void fftBack_Async_1D(float2* buffer_1,float2* buffer_host){
 void fftBack_Async_2D(float2* buffer_1,float2* buffer_host){
 
 	
-	for(int i=0;i<NYSIZE/nsteps;i++)
+	for(int i=0;i<NXSIZE/n_steps;i++)
 	{
 
 	//copy data from host to device memory asynchronously
-	cudaMemcpyAsync((float2*)buffer_1+i*NYSIZE*NZ*NX/n_steps,(float2*)buffer_host+i*NYSIZE*NZ*NX/n_steps,size/n_steps,cudaMemcpyHostToDevice,stream[i]);
+	cudaMemcpyAsync((float2*)buffer_1+i*NYSIZE*NZ*NX/n_steps,(float2*)buffer_host+i*NYSIZE*NZ*NX/n_steps,size/n_steps,cudaMemcpyHostToDevice,STREAMS[i]);
 
 	
 	//FFT 2D
 
-	cufftCheck(cufftSetStream(fft2_c2r,stream[i]),"SetStream");
+	cufftCheck(cufftSetStream(fft2_c2r,STREAMS[i]),"SetStream");
 	cufftCheck(cufftExecC2R(fft2_c2r,buffer_1+i*NYSIZE*NZ*NX/n_steps,(float*)(buffer_1)+i*2*NYSIZE*NZ*NX/n_steps),"forward transform");
 	
 	}
@@ -104,19 +117,19 @@ void fftBack_Async_2D(float2* buffer_1,float2* buffer_host){
 void fftForw_Async_1D(float2* buffer_1,float2* buffer_host){
 
 
-	for(int i=0;i<NXSIZE/nsteps;i++)
+	for(int i=0;i<NXSIZE/n_steps;i++)
 	{
 
 	//COPY		
 
 	//copy data from host to device memory asynchronously
-	cudaMemcpyAsync((float2*)buffer_1+i*NY*NZ*NXSIZE/n_steps,(float2*)buffer_host+i*NY*NZ*NXSIZE/n_steps,size/n_steps,cudaMemcpyHostToDevice,stream[i]);
+	cudaMemcpyAsync((float2*)buffer_1+i*NY*NZ*NXSIZE/n_steps,(float2*)buffer_host+i*NY*NZ*NXSIZE/n_steps,size/n_steps,cudaMemcpyHostToDevice,STREAMS[i]);
 
 	
 	//FFT 1D
 
-	cufftCheck(cufftSetStream(fft1_c2c,stream[i]),"SetStream");
-	cufftCheck(cufftExecC2C(fft1_c2c,buffer_1+i*NY*NZ*NXSIZE/n_steps,buffer_1+i*NY*NZ*NXSIZE/n_steps,CUFFT_BACKWARD),"forward transform");	
+	cufftCheck(cufftSetStream(fft1_c2c,STREAMS[i]),"SetStream");
+	cufftCheck(cufftExecC2C(fft1_c2c,buffer_1+i*NY*NZ*NXSIZE/n_steps,buffer_1+i*NY*NZ*NXSIZE/n_steps,CUFFT_FORWARD),"forward transform");	
 
 	//TRANSPOSE 
 
@@ -131,16 +144,16 @@ void fftForw_Async_1D(float2* buffer_1,float2* buffer_host){
 
 void fftForw_Async_2D(float2* buffer_1,float2* buffer_host){
 
-	for(int i=0;i<NYSIZE/nsteps;i++)
+	for(int i=0;i<NXSIZE/n_steps;i++)
 	{
 	
 	//FFT 2D
 
-	cufftCheck(cufftSetStream(fft2_c2r,stream[i]),"SetStream");
+	cufftCheck(cufftSetStream(fft2_c2r,STREAMS[i]),"SetStream");
 	cufftCheck(cufftExecC2R(fft2_c2r,buffer_1+i*NYSIZE*NZ*NX/n_steps,(float*)(buffer_1)+i*2*NYSIZE*NZ*NX/n_steps),"forward transform");
 
 	//copy data from host to device memory asynchronously
-	cudaMemcpyAsync((float2*)buffer_host+i*NYSIZE*NZ*NX/n_steps,bytes,(float2*)buffer_1+i*NYSIZE*NZ*NX/n_steps,bytes,cudaMemcpyDeviceToHost,stream[i]);
+	cudaMemcpyAsync((float2*)buffer_host+i*NYSIZE*NZ*NX/n_steps,(float2*)buffer_1+i*NYSIZE*NZ*NX/n_steps,size/n_steps,cudaMemcpyDeviceToHost,STREAMS[i]);
 	
 
 	}
@@ -196,6 +209,6 @@ void fftBackwardAsyn(float2* buffer_1){
 }
 
 
-*/
+
 
 
