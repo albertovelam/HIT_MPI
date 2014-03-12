@@ -1,7 +1,5 @@
-
 #include "turH.h"
-#include <libconfig.h>
-#include <string.h>
+
 
 static vectorField u;
 static vectorField u_host;
@@ -106,7 +104,7 @@ void starSimulation(void){
 	float time=(float) config_setting_get_float(config_lookup(&config,"application.time"));
 	int counter=0;
 	
-	counter=RK2step(u,&time);
+	counter=RK2step(u,&time,&config);
 
 	int mpierr = MPI_Barrier(MPI_COMM_WORLD);
 

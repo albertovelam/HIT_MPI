@@ -15,6 +15,7 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include <libconfig.h>
 
 #ifndef NSS
 #define NSS 256
@@ -55,7 +56,7 @@ void starSimulation(void);
 //RK2
 
 void RK2setup(void);
-int RK2step(vectorField u,float* time);
+int RK2step(vectorField u,float* time, config_t *config);
 
 //Random
 
