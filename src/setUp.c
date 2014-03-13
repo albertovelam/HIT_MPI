@@ -1,7 +1,5 @@
-
 #include "turH.h"
-#include <libconfig.h>
-#include <string.h>
+
 
 static vectorField u;
 static vectorField u_host;
@@ -59,6 +57,19 @@ void starSimulation(void){
 	  return;
 	}
 
+	case_config_t case_config = {
+	  (float) config_setting_get_float(config_lookup(&config,"application.time")),
+	  (int) config_setting_get_bool(config_lookup(&config,"application.forcing")),
+	  (int) config_setting_get_int(config_lookup(&config,"application.stats_every")),
+	  (char *) config_setting_get_string(config_lookup(&config,"application.read.U")),
+	  (char *) config_setting_get_string(config_lookup(&config,"application.read.V")),
+	  (char *) config_setting_get_string(config_lookup(&config,"application.read.W")),
+	  (char *) config_setting_get_string(config_lookup(&config,"application.statfile")),
+	  (char *) config_setting_get_string(config_lookup(&config,"application.write.U")),
+	  (char *) config_setting_get_string(config_lookup(&config,"application.write.U")),
+	  (char *) config_setting_get_string(config_lookup(&config,"application.write.U")),
+	};
+
 	//Size 
 		
 	size_t size=NXSIZE*NY*NZ*sizeof(float2);
@@ -78,16 +89,10 @@ void starSimulation(void){
 	cudaCheck(cudaMalloc( (void**)&u.z,size),"malloc_t1");
 
 	//MPI COPY to nodes
-	read = config_lookup(&config, "application.read");
-	
-	config_setting_lookup_string(read, "U", &str);
-	mpiCheck(read_parallel_float((char *)str,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
 
-	config_setting_lookup_string(read, "V", &str);
-	mpiCheck(read_parallel_float((char *)str,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read");
-
-	config_setting_lookup_string(read, "W", &str);
-	mpiCheck(read_parallel_float((char *)str,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read");
+	mpiCheck(read_parallel_float(case_config.readU,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
+	mpiCheck(read_parallel_float(case_config.readV,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read");
+	mpiCheck(read_parallel_float(case_config.readW,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read");
 	
 	//COPY to GPUs
 
@@ -106,7 +111,7 @@ void starSimulation(void){
 	float time=(float) config_setting_get_float(config_lookup(&config,"application.time"));
 	int counter=0;
 	
-	counter=RK2step(u,&time);
+	counter=RK2step(u,&time,&case_config);
 
 	int mpierr = MPI_Barrier(MPI_COMM_WORLD);
 
@@ -121,18 +126,12 @@ void starSimulation(void){
 
 	//MPI COPY to nodes
 	
-	write = config_lookup(&config, "application.write");
 
 	if (RANK == 0){ printf("Writing output.\n");}
 	
-	config_setting_lookup_string(write, "U", &str);
-	mpiCheck(wrte_parallel_float((char *)str,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"write");
-	
-	config_setting_lookup_string(write, "V", &str);
-	mpiCheck(wrte_parallel_float((char *)str,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"write");
-	
-	config_setting_lookup_string(write, "W", &str);
-	mpiCheck(wrte_parallel_float((char *)str,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"write");
+	mpiCheck(wrte_parallel_float(case_config.writeU,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"write");
+	mpiCheck(wrte_parallel_float(case_config.writeV,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"write");
+	mpiCheck(wrte_parallel_float(case_config.writeW,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"write");
 	
 	if (RANK == 0){ printf("Nothing important left to do.\n");}
 

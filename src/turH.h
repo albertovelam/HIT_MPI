@@ -15,12 +15,32 @@
 #include <time.h>
 #include <sys/time.h>
 
+#include <libconfig.h>
 
 #ifndef NSS
 #define NSS 256
 #endif
 
 typedef struct { float2* x;float2* y;float2* z;} vectorField;
+
+/* 
+   Structure that contains the configuration of the run. NSS is
+   missing, because it is used at compile time
+ */
+
+typedef struct case_config_t {
+  float time;
+  int forcing;
+  int stats_every;
+  char *readU;
+  char *readV;
+  char *readW;
+  char *statfile;
+  char *writeU;
+  char *writeV;
+  char *writeW;
+} case_config_t;
+
 
 //ONLY FOR NY=NX
 
@@ -55,7 +75,7 @@ void starSimulation(void);
 //RK2
 
 void RK2setup(void);
-int RK2step(vectorField u,float* time);
+int RK2step(vectorField u,float* time, case_config_t *config);
 
 //Random
 
