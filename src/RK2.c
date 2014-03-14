@@ -69,9 +69,9 @@ void collect_statistics(int step, float dt, vectorField uw, vectorField u, case_
   free(E);
 }
 
-static float calcDt(vectorField uw,vectorField u){	
+static float calcDt(vectorField uw,vectorField u, case_config_t *config){	
 	
-	const float cfl=0.5;
+	const float cfl = config->CFL;
 	float dt=0.0f;
 
 	float dtc=0.0f;	
@@ -174,7 +174,7 @@ int RK2step(vectorField u,float* time, case_config_t *config)
 
 	F(uw,r,Delta_1); 
 
-	dt=calcDt(uw,u);	
+	dt=calcDt(uw,u,config);	
 
 	if( counter%config->stats_every == 0 ){
 	  if (RANK == 0){ printf("Computing statistics.\n");}

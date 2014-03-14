@@ -58,6 +58,7 @@ void starSimulation(void){
 	}
 
 	case_config_t case_config = {
+	  (float) config_setting_get_float(config_lookup(&config,"application.CFL")),
 	  (float) config_setting_get_float(config_lookup(&config,"application.time")),
 	  (int) config_setting_get_bool(config_lookup(&config,"application.forcing")),
 	  (int) config_setting_get_int(config_lookup(&config,"application.stats_every")),
@@ -66,8 +67,8 @@ void starSimulation(void){
 	  (char *) config_setting_get_string(config_lookup(&config,"application.read.W")),
 	  (char *) config_setting_get_string(config_lookup(&config,"application.statfile")),
 	  (char *) config_setting_get_string(config_lookup(&config,"application.write.U")),
-	  (char *) config_setting_get_string(config_lookup(&config,"application.write.U")),
-	  (char *) config_setting_get_string(config_lookup(&config,"application.write.U")),
+	  (char *) config_setting_get_string(config_lookup(&config,"application.write.V")),
+	  (char *) config_setting_get_string(config_lookup(&config,"application.write.W")),
 	};
 
 	//Size 

@@ -29,6 +29,7 @@ typedef struct { float2* x;float2* y;float2* z;} vectorField;
  */
 
 typedef struct case_config_t {
+  float CFL;
   float time;
   int forcing;
   int stats_every;
