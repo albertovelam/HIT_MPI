@@ -8,8 +8,6 @@ static vectorField uw;
 static vectorField r;
 static float2* t1;
 
-FILE *fp_rk2_1;
-FILE *fp_rk2_2;
 
 void RK2setup(void)
 {
@@ -37,23 +35,41 @@ void RK2setup(void)
 	set2zero(r.y);
 	set2zero(r.z);
 
-	//SET BLOCK DIMENSIONS
-
-	// Set the file to write in
-		
-	fp_rk2_1=fopen("./data/data_1.dat","w");
-	fp_rk2_2=fopen("./data/data_2.dat","w");
-
-
 	return;
 
 }
 
 
-
-static float calcDt(vectorField uw,vectorField u){
+void collect_statistics(int step, float dt, vectorField uw, vectorField u, case_config_t *config){
+  float* E=(float*)malloc(sizeof(float));
+  float* D=(float*)malloc(sizeof(float));
+  
+  calc_E(u,t1,E);
+  calc_D(u,t1,D);
+  
+  float u_p=sqrt((2.0f/3.0f)*E[0]);	
+  float omega_p=sqrt(REYNOLDS*D[0]);
+  
+  float lambda=sqrt(15.0f*u_p*u_p/(omega_p*omega_p));
+  float eta=pow(REYNOLDS,-3.0f/4.0f)*pow(D[0],-1.0f/4.0f);
+  
+  float Rl=u_p*lambda*REYNOLDS;
+  int kmax=sqrt(2.0f)/3.0f*N;	
 
 	
+  if(RANK == 0){
+    FILE *statfilep = fopen(config->statfile,"a");
+    printf("Appending file %s\n",config->statfile);
+    fprintf(statfilep,"%e,%e,%e,%e,%e,%e,%e,%e,%e\n",
+    	    dt,E[0],D[0],u_p,omega_p,eta,lambda,Rl,eta*kmax);
+    fclose(statfilep);
+  }
+
+  free(D);
+  free(E);
+}
+
+static float calcDt(vectorField uw,vectorField u){	
 	
 	const float cfl=0.5;
 	float dt=0.0f;
@@ -73,46 +89,10 @@ static float calcDt(vectorField uw,vectorField u){
 	dtc=cfl/((N/3)*c);	
 	dtv=cfl*REYNOLDS/((N/3)*(N/3));
 	
-	
 	dt=fmin(dtc,dtv);
 	//dt=fmin(dt,dtf);
 
-	//Calculate data
-
-	float* E=(float*)malloc(sizeof(float));
-	float* D=(float*)malloc(sizeof(float));
-
-	calc_E(u,t1,E);
-	calc_D(u,t1,D);
-
-	float u_p=sqrt((2.0f/3.0f)*E[0]);	
-	float omega_p=sqrt(REYNOLDS*D[0]);
-	
-	float lambda=sqrt(15.0f*u_p*u_p/(omega_p*omega_p));
-	float eta=pow(REYNOLDS,-3.0f/4.0f)*pow(D[0],-1.0f/4.0f);
-	
-	float Rl=u_p*lambda*REYNOLDS;
-	int kmax=sqrt(2.0f)/3.0f*N;	
-
-	
-	// Print data to screen	
-
-	if(RANK==0){
-	printf("\n(dtc,dts,dtf)=(%f,%f)",dtc,dtv);
-	printf("\nvmax=(%f,%f,%f)",umax[0]/N3,umax[1]/N3,umax[2]/N3);	
-	printf("\n(E,D)=(%e,%e)",E[0],D[0]);
-	printf("\nu_p=%f",u_p);
-	printf("\nomega_p=%f",omega_p);	
-	printf("\n(eta,lamb)=(%f,%f)",eta,lambda);
-	printf("\nRl=%f",Rl);
-	printf("\netak=%f",eta*kmax);	
-	printf("\n************************\n");
-	}
-
-		
-	free(D);
-	free(E);
-	free(umax);	
+	free(umax);
 
 	return dt;
 
@@ -136,14 +116,12 @@ static float caclCf(vectorField u,float2* t,int kf)
 	//};
 
 	float Cf=pow(REYNOLDS,-3.0f)*pow(kmax/2.0f,4.0f)/(energy);
-
-	
 	
 	return Cf;
 
 }
 
-int RK2step(vectorField u,float* time, config_t *config)
+int RK2step(vectorField u,float* time, case_config_t *config)
 {
 	
 	static float time_elapsed=0.0f;
@@ -168,7 +146,7 @@ int RK2step(vectorField u,float* time, config_t *config)
 	while(time_elapsed < *time){
 
 	//Calc forcing	
-	  if (config_setting_get_bool(config_lookup(config,"application.forcing"))){
+	  if (config->forcing){
 	    Cf=caclCf(u,t1,kf);
 	  }
 	  else{
@@ -197,7 +175,11 @@ int RK2step(vectorField u,float* time, config_t *config)
 	F(uw,r,Delta_1); 
 
 	dt=calcDt(uw,u);	
-	printf("dt = %f\n",dt);
+
+	if( counter%config->stats_every == 0 ){
+	  if (RANK == 0){ printf("Computing statistics.\n");}
+	  collect_statistics(counter,dt,uw,u,config);
+	}
 
 	RK_step_1(uw,u,r,REYNOLDS,dt,Cf,kf);
 
@@ -213,18 +195,9 @@ int RK2step(vectorField u,float* time, config_t *config)
 	time_elapsed+=dt;
 
 	if(RANK==0){
-	printf("\nsimtime=%f",time_elapsed);
-	printf("\ncounter=%d",counter);
-	printf("\nCf=%f\n",Cf);
-	}
-
-	//Write to disc	
-
-	if(counter%frec==0){
-	//velocityH5(u,t1,counter/frec,N);
-	//dissipationH5(modS,Cs,counter/frec,N);
-	//enstrophyH5(u,t3,t2.x,counter/frec,N);
-	//writeVectorField(u,N);
+	  printf("Timestep: %d, ",counter);
+	  printf("Simulation time: %f, ",time_elapsed);
+	  printf("Forcing coefficient: %f\n",Cf);
 	}
 
 	//End of step
@@ -236,7 +209,7 @@ int RK2step(vectorField u,float* time, config_t *config)
 	free(Delta_1);
 	free(Delta_2);
 
-	if (RANK == 0){ printf("RK iterations finished.");}
+	if (RANK == 0){ printf("RK iterations finished.\n");}
 
 	return counter;	
 	
