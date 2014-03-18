@@ -6,6 +6,7 @@ int chxyz2yzx(double *x, double *y, int Nx, int Ny, int Nz,
   int i,j,k,n;
   int myNx, myNy;
   int MPIErr;
+  int reg1, reg2, reg3, reg4, reg5, reg6;
   
   myNx = Nx/size;
   myNy = Ny/size;
@@ -14,8 +15,10 @@ int chxyz2yzx(double *x, double *y, int Nx, int Ny, int Nz,
   /* First step. First transpose in memory */
   for (i=0; i<myNx; i++){
     for (j=0; j<Ny; j++){
+      reg1 = j*myNx*Nz + i*Nz;
+      reg2 = i*Ny*Nz + j*Nz;
       for (k=0; k<Nz; k++){
-  	y[j*myNx*Nz + i*Nz + k] = x[i*Ny*Nz + j*Nz + k];
+  	y[reg1 + k] = x[reg2 + k];
       }
     }
   }
@@ -29,16 +32,16 @@ int chxyz2yzx(double *x, double *y, int Nx, int Ny, int Nz,
   /* Final step for forward. Transpose in memory */
 
   for (n=0; n<size; n++){
+    reg1 = n*myNx;
+    reg2 = n*myNy*myNx*Nz;
     for (j=0; j<myNy; j++){
+      reg3 = j*Nz*size*myNx;
+      reg4 = j*myNx*Nz;
       for (i=0; i<myNx; i++){
+	reg5 = i*Nz;
 	for (k=0; k<Nz; k++){
-	  y[j*Nz*size*myNx +
-	    k*size*myNx +
-	    n*myNx +
-	    i] = x[n*myNy*myNx*Nz +
-	  	   j*myNx*Nz +
-	  	   i*Nz +
-	  	   k];
+	  reg6 = k*size*myNx;
+	  y[reg3 + reg6 + reg1 + i] = x[reg2 + reg4 + reg5 + k];
 	}
       }
     }
@@ -52,21 +55,22 @@ int chyzx2xyz(double *y, double *x, int Nx, int Ny, int Nz,
   int i,j,k,n;
   int myNx, myNy;
   int MPIErr;
+  int reg1, reg2, reg3, reg4, reg5, reg6;
   
   myNx = Nx/size;
   myNy = Ny/size;
 
   for (n=0; n<size; n++){
+    reg1 = n*myNy*myNx*Nz;
+    reg2 = n*myNx;
     for (j=0; j<myNy; j++){
+      reg3 = j*myNx*Nz;
+      reg4 = j*Nz*size*myNx;
       for (i=0; i<myNx; i++){
+	reg5 = i*Nz;
 	for (k=0; k<Nz; k++){
-	  x[n*myNy*myNx*Nz +
-	    j*myNx*Nz +
-	    i*Nz +
-	    k] = y[j*Nz*size*myNx +
-		   k*size*myNx +
-		   n*myNx +
-		   i];
+	  reg6 = k*size*myNx;
+	  x[reg1 + reg3 + reg5 + k] = y[reg4 + reg6 + reg2 + i];
 	}
       }
     }
@@ -81,8 +85,10 @@ int chyzx2xyz(double *y, double *x, int Nx, int Ny, int Nz,
   /* Fourth and final transpose */
   for (i=0; i<myNx; i++){
     for (j=0; j<Ny; j++){
+      reg1 = i*Ny*Nz + j*Nz;
+      reg2 = j*myNx*Nz + i*Nz;
       for (k=0; k<Nz; k++){
-	x[i*Ny*Nz + j*Nz + k] = y[j*myNx*Nz + i*Nz + k];
+	x[reg1 + k] = y[reg2 + k];
       }
     }
   }

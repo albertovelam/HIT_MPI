@@ -1,6 +1,6 @@
-CC = mpic++ -O3
+CC = mpic++ -O3 -march=corei7-avx -mtune=corei7-avx -ffast-math
 NVCC = nvcc -O3
-LD = mpic++ -O3
+LD = mpic++ -O3 -march=corei7-avx -mtune=corei7-avx
 LIBS = -lcudart -lcufft -lcublas -lcuda  -lstdc++ -lm -lhdf5  -lhdf5 -lhdf5_hl -lconfig
 PATHS = -L/opt/cuda/lib64/ -L/usr/lib64 -L/usr/lib
 INCLUDES = -I/opt/cuda/include
