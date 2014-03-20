@@ -34,6 +34,7 @@ void setUp(void){
 	
 	//Setups
 	fftSetup();
+	setFftAsync();
 	RK2setup();
 			
 	return;
@@ -66,8 +67,8 @@ void starSimulation(void){
 	  (char *) config_setting_get_string(config_lookup(&config,"application.read.W")),
 	  (char *) config_setting_get_string(config_lookup(&config,"application.statfile")),
 	  (char *) config_setting_get_string(config_lookup(&config,"application.write.U")),
-	  (char *) config_setting_get_string(config_lookup(&config,"application.write.U")),
-	  (char *) config_setting_get_string(config_lookup(&config,"application.write.U")),
+	  (char *) config_setting_get_string(config_lookup(&config,"application.write.V")),
+	  (char *) config_setting_get_string(config_lookup(&config,"application.write.W")),
 	};
 
 	//Size 
@@ -108,7 +109,7 @@ void starSimulation(void){
 	//RK integration
 	
 
-	float time=(float) config_setting_get_float(config_lookup(&config,"application.time"));
+	float time=10.0f;//(float) config_setting_get_float(config_lookup(&config,"application.time"));
 	int counter=0;
 	
 	counter=RK2step(u,&time,&case_config);

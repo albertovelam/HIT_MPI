@@ -36,10 +36,14 @@ void F( vectorField u, vectorField r,float* Delta)
 	dealias(u);
 	
 	// Transform u to real space
-
+/*
 	fftBackward(u.x);
 	fftBackward(u.y);
 	fftBackward(u.z);
+*/
+	fftBack1T(u.x);
+	fftBack1T(u.y);
+	fftBack1T(u.z);
 
 
 	// Fill with zeros
@@ -48,10 +52,14 @@ void F( vectorField u, vectorField r,float* Delta)
 	
 	// Transform w to real space
 
-	
+/*	
 	fftBackward(r.x);
 	fftBackward(r.y);	
-	fftBackward(r.z);	
+	fftBackward(r.z);
+*/
+	fftBack1T(r.x);
+	fftBack1T(r.y);
+	fftBack1T(r.z);	
 	
 
 	// Calculate the convolution rotor of u and w
@@ -61,11 +69,14 @@ void F( vectorField u, vectorField r,float* Delta)
 
 	// Transform rotor to fourier space
 
-	
+/*	
 	fftForward(r.x);
 	fftForward(r.y);
 	fftForward(r.z);
-	
+*/
+	fftForw1T(r.x);
+	fftForw1T(r.y);
+	fftForw1T(r.z);	
 
 	// Dealiase high frecuencies	
 
