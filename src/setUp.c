@@ -35,7 +35,9 @@ void setUp(void){
 	//Setups
 	fftSetup();
 	setFftAsync();
-	RK2setup();
+	
+	//RK2setup();
+	RK3setup();
 			
 	return;
 
@@ -109,10 +111,10 @@ void starSimulation(void){
 	//RK integration
 	
 
-	float time=10.0f;//(float) config_setting_get_float(config_lookup(&config,"application.time"));
+	float time=(float) config_setting_get_float(config_lookup(&config,"application.time"));
 	int counter=0;
 	
-	counter=RK2step(u,&time,&case_config);
+	counter=RK3step(u,&time,&case_config);
 
 	int mpierr = MPI_Barrier(MPI_COMM_WORLD);
 

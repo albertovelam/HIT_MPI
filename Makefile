@@ -1,5 +1,5 @@
 CC = mpic++ -O3
-NVCC = nvcc  -arch=sm_20
+NVCC = nvcc -O3  -arch=sm_20
 LD = mpic++ -O3
 LIBS = -lcudart -lcufft -lcublas -lcuda  -lstdc++ -lm -lhdf5  -lhdf5 -lhdf5_hl -lconfig
 PATHS = -L/opt/cuda/lib64/ -L/usr/lib64 -L/usr/lib

@@ -77,6 +77,9 @@ void starSimulation(void);
 void RK2setup(void);
 int RK2step(vectorField u,float* time, case_config_t *config);
 
+void RK3setup(void);
+int  RK3step(vectorField u,float* time, case_config_t *config);
+
 //Random
 
 int randomNumberGen(int T);
@@ -145,10 +148,15 @@ void fftCheck(void);
 
 ///////////CUDA FUNCTIONS////////////////////////////////////////////
 
-//RK_kernels
-extern void RK_step_1(vectorField uw,vectorField u,vectorField r,float Re,float dt,float Cf,int kf);
-extern void RK_step_05(vectorField u,vectorField uw,float Re,float dt,float Cf,int kf);
-extern void RK_step_2(vectorField uw,vectorField r,float Re,float dt,float Cf,int kf);
+//RK2_kernels
+extern void RK2_step_1(vectorField uw,vectorField u,vectorField r,float Re,float dt,float Cf,int kf);
+extern void RK2_step_05(vectorField u,vectorField uw,float Re,float dt,float Cf,int kf);
+extern void RK2_step_2(vectorField uw,vectorField r,float Re,float dt,float Cf,int kf);
+
+//RK3_kernels
+
+extern void RK3_step_1(vectorField uw,vectorField u,vectorField r,float Re,float dt,float Cf,int kf,int nc);
+extern void RK3_step_2(vectorField uw,vectorField u,vectorField r,float Re,float dt,float Cf,int kf,int nc);
 
 //Dealias
 

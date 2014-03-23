@@ -40,7 +40,7 @@ void RK2setup(void)
 }
 
 
-void collect_statistics(int step, float dt, vectorField uw, vectorField u, case_config_t *config){
+static void collect_statistics(int step, float dt, vectorField uw, vectorField u, case_config_t *config){
 
   float* E=(float*)malloc(sizeof(float));
   float* D=(float*)malloc(sizeof(float));
@@ -186,15 +186,15 @@ int RK2step(vectorField u,float* time, case_config_t *config)
 	  collect_statistics(counter,dt,uw,u,config);
 	}
 
-	RK_step_1(uw,u,r,REYNOLDS,dt,Cf,kf);
+	RK2_step_1(uw,u,r,REYNOLDS,dt,Cf,kf);
 
 	//Second substep
 	
-	RK_step_05(u,uw,REYNOLDS,dt,Cf,kf);	
+	RK2_step_05(u,uw,REYNOLDS,dt,Cf,kf);	
 	
 	F(uw,r,Delta_2); 
 
-	RK_step_2(u,r,REYNOLDS,dt,Cf,kf);	 
+	RK2_step_2(u,r,REYNOLDS,dt,Cf,kf);	 
 	
 	counter++;
 	time_elapsed+=dt;
