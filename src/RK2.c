@@ -41,6 +41,7 @@ void RK2setup(void)
 
 
 void collect_statistics(int step, float dt, vectorField uw, vectorField u, case_config_t *config){
+
   float* E=(float*)malloc(sizeof(float));
   float* D=(float*)malloc(sizeof(float));
   
@@ -88,7 +89,11 @@ static float calcDt(vectorField uw,vectorField u, case_config_t *config){
 	
 	dtc=cfl/((N/3)*c);	
 	dtv=cfl*REYNOLDS/((N/3)*(N/3));
-	
+	/*
+	if(RANK == 0){
+	printf("\nVmax=(%f,%f,%f)\n",umax[0]/N3,umax[1]/N3,umax[2]/N3);
+	}
+	*/
 	dt=fmin(dtc,dtv);
 	//dt=fmin(dt,dtf);
 
@@ -146,7 +151,7 @@ int RK2step(vectorField u,float* time, case_config_t *config)
 	while(time_elapsed < *time){
 
 	//Calc forcing	
-	  if (config->forcing){
+	  if(config->forcing){
 	    Cf=caclCf(u,t1,kf);
 	  }
 	  else{

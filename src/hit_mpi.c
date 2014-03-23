@@ -3,22 +3,33 @@
 
 int chxyz2yzx(double *x, double *y, int Nx, int Ny, int Nz,
 	      int rank, int size){
-  int i,j,k,n;
+  int i,j,k,kk,n;
+  int kblocksize, kblocks;
   int myNx, myNy;
   int MPIErr;
   int reg1, reg2, reg3, reg4, reg5, reg6;
   
   myNx = Nx/size;
   myNy = Ny/size;
-  
+  kblocksize = 64; // Constant to tune
+  kblocks = Nz/kblocksize;
   
   /* First step. First transpose in memory */
   for (i=0; i<myNx; i++){
+    for (kk=0; kk<kblocks; kk++){
+      for (j=0; j<Ny; j++){
+	reg1 = j*myNx*Nz + i*Nz;
+	reg2 = i*Ny*Nz + j*Nz;
+	for (k=kk*kblocksize; k<(kk+1)*kblocksize; k++){
+	  y[reg1 + k] = x[reg2 + k];
+	}
+      }
+    }
     for (j=0; j<Ny; j++){
       reg1 = j*myNx*Nz + i*Nz;
       reg2 = i*Ny*Nz + j*Nz;
-      for (k=0; k<Nz; k++){
-  	y[reg1 + k] = x[reg2 + k];
+      for (k=kblocks*kblocksize; k<Nz; k++){
+	y[reg1 + k] = x[reg2 + k];
       }
     }
   }
@@ -37,9 +48,18 @@ int chxyz2yzx(double *x, double *y, int Nx, int Ny, int Nz,
     for (j=0; j<myNy; j++){
       reg3 = j*Nz*size*myNx;
       reg4 = j*myNx*Nz;
+      for (kk=0; kk<kblocks; kk++){
+	for (i=0; i<myNx; i++){
+	  reg5 = i*Nz;
+	  for (k=kk*kblocksize; k<(kk+1)*kblocksize; k++){
+	    reg6 = k*size*myNx;
+	    y[reg3 + reg6 + reg1 + i] = x[reg2 + reg4 + reg5 + k];
+	  }
+	}
+      }
       for (i=0; i<myNx; i++){
 	reg5 = i*Nz;
-	for (k=0; k<Nz; k++){
+	for (k=kblocks*kblocksize; k<Nz; k++){
 	  reg6 = k*size*myNx;
 	  y[reg3 + reg6 + reg1 + i] = x[reg2 + reg4 + reg5 + k];
 	}
@@ -52,13 +72,16 @@ int chxyz2yzx(double *x, double *y, int Nx, int Ny, int Nz,
 
 int chyzx2xyz(double *y, double *x, int Nx, int Ny, int Nz,
 	      int rank, int size){
-  int i,j,k,n;
+  int i,j,k,kk,n;
+  int kblocksize, kblocks;
   int myNx, myNy;
   int MPIErr;
   int reg1, reg2, reg3, reg4, reg5, reg6;
   
   myNx = Nx/size;
   myNy = Ny/size;
+  kblocksize = 64; // Constant to tune
+  kblocks = Nz/kblocksize;
 
   for (n=0; n<size; n++){
     reg1 = n*myNy*myNx*Nz;
@@ -66,9 +89,18 @@ int chyzx2xyz(double *y, double *x, int Nx, int Ny, int Nz,
     for (j=0; j<myNy; j++){
       reg3 = j*myNx*Nz;
       reg4 = j*Nz*size*myNx;
+      for (kk=0; kk<kblocks; kk++){
+	for (i=0; i<myNx; i++){
+	  reg5 = i*Nz;
+	  for (k=kk*kblocksize; k<(kk+1)*kblocksize; k++){
+	    reg6 = k*size*myNx;
+	    x[reg1 + reg3 + reg5 + k] = y[reg4 + reg6 + reg2 + i];
+	  }
+	}
+      }
       for (i=0; i<myNx; i++){
 	reg5 = i*Nz;
-	for (k=0; k<Nz; k++){
+	for (k=kblocks*kblocksize; k<Nz; k++){
 	  reg6 = k*size*myNx;
 	  x[reg1 + reg3 + reg5 + k] = y[reg4 + reg6 + reg2 + i];
 	}
@@ -84,13 +116,22 @@ int chyzx2xyz(double *y, double *x, int Nx, int Ny, int Nz,
 
   /* Fourth and final transpose */
   for (i=0; i<myNx; i++){
+    for (kk=0; kk<kblocks; kk++){
+      for (j=0; j<Ny; j++){
+	reg1 = i*Ny*Nz + j*Nz;
+	reg2 = j*myNx*Nz + i*Nz;
+	for (k=kk*kblocksize; k<(kk+1)*kblocksize; k++){
+	  x[reg1 + k] = y[reg2 + k];
+	}
+      }
+    }
     for (j=0; j<Ny; j++){
       reg1 = i*Ny*Nz + j*Nz;
       reg2 = j*myNx*Nz + i*Nz;
-      for (k=0; k<Nz; k++){
+      for (k=kblocks*kblocksize; k<Nz; k++){
 	x[reg1 + k] = y[reg2 + k];
       }
-    }
+    }  
   }
   return MPIErr;
 }

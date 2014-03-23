@@ -34,6 +34,7 @@ void setUp(void){
 	
 	//Setups
 	fftSetup();
+	setFftAsync();
 	RK2setup();
 			
 	return;
@@ -109,7 +110,7 @@ void starSimulation(void){
 	//RK integration
 	
 
-	float time=(float) config_setting_get_float(config_lookup(&config,"application.time"));
+	float time = (float) config_setting_get_float(config_lookup(&config,"application.time"));
 	int counter=0;
 	
 	counter=RK2step(u,&time,&case_config);

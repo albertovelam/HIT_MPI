@@ -124,8 +124,25 @@ int wrte_parallel_float(char *filename, float *x, int NX, int NY, int NZ,
 
 //Statistics
 void calc_E( vectorField u, float2* t,float* E);
-void calc_E( vectorField u, float2* t,float* D);
+void calc_D( vectorField u, float2* t,float* D);
 
+//Fft overlap
+
+void setFftAsync(void);
+
+void transpose_A(float2* u_2,float2* u_1);
+void transpose_B(float2* u_2,float2* u_1);
+
+void fftBack1T(float2* u1);
+void fftForw1T(float2* u1);
+
+void fftBackMultiple(float2* u1,float2* u2,float2* u3,float2* u4,float2* u5,float2* u6);
+void fftForwMultiple(float2* u1,float2* u2,float2* u3);
+void calcUmaxV2(vectorField t,float* ux,float* uy,float* uz);
+float sumElementsV2(float2* buffer_1);
+
+//Routine check
+void fftCheck(void);
 
 ///////////CUDA FUNCTIONS////////////////////////////////////////////
 
@@ -160,10 +177,6 @@ extern void shift(vectorField t,float* Delta);
 extern void calc_U_W( vectorField U,vectorField W);
 
 
-//Statistics
-
-extern void  calc_D( vectorField u, float2* t, float* D);
-extern void calc_E( vectorField u, float2* t, float* E);
 
 //Routine check
 extern void routineCheck(vectorField t);
