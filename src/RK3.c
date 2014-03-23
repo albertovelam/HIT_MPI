@@ -9,7 +9,7 @@ static vectorField r;
 static float2* t1;
 
 
-void RK2setup(void)
+void RK3setup(void)
 {
 	
 
@@ -40,7 +40,7 @@ void RK2setup(void)
 }
 
 
-static void collect_statistics(int step, float dt, vectorField uw, vectorField u, case_config_t *config){
+static void collect_statistics(int step, float dt, vectorField u, case_config_t *config){
 
   float* E=(float*)malloc(sizeof(float));
   float* D=(float*)malloc(sizeof(float));
@@ -70,9 +70,9 @@ static void collect_statistics(int step, float dt, vectorField uw, vectorField u
   free(E);
 }
 
-static float calcDt(vectorField uw,vectorField u, case_config_t *config){	
+static float calcDt(vectorField uw){	
 	
-	const float cfl = config->CFL;
+	const float cfl=0.5;
 	float dt=0.0f;
 
 	float dtc=0.0f;	
@@ -126,7 +126,7 @@ static float caclCf(vectorField u,float2* t,int kf)
 
 }
 
-int RK2step(vectorField u,float* time, case_config_t *config)
+int RK3step(vectorField u,float* time, case_config_t *config)
 {
 	
 	static float time_elapsed=0.0f;
@@ -135,9 +135,10 @@ int RK2step(vectorField u,float* time, case_config_t *config)
 	float pi=acos(-1.0f);
 	float om=2.0f*pi/N;	
 	
-	float* Delta=(float*)malloc(3*sizeof(float));
-	float* Delta_1=(float*)malloc(3*sizeof(float));
-	float* Delta_2=(float*)malloc(3*sizeof(float));	
+	float Delta[3];
+	float Delta_1[3];
+	float Delta_2[3];
+	float Delta_3[3];  
 
 	int frec=2000;
 
@@ -147,7 +148,7 @@ int RK2step(vectorField u,float* time, case_config_t *config)
 	float Cf;	
 
 	//RK2 time steps	
-
+	printf("\n time=%f",*time);
 	while(time_elapsed < *time){
 
 	//Calc forcing	
@@ -171,31 +172,44 @@ int RK2step(vectorField u,float* time, case_config_t *config)
 	
 	for(int i=0;i<3;i++){
 	Delta_1[i]=om*Delta[i];
-	Delta_2[i]=om*(Delta[i]+0.5f);}
-	
-	//First substep
+	Delta_2[i]=om*(Delta[i]+1.0f/3.0f);
+	Delta_3[i]=om*(Delta[i]+2.0f/3.0f);}
+
+	//First substep	
 
 	copyVectorField(uw,u);	
-
 	F(uw,r,Delta_1); 
 
-	dt=calcDt(uw,u,config);	
+	dt=calcDt(uw);	
 
 	if( counter%config->stats_every == 0 ){
 	  if (RANK == 0){ printf("Computing statistics.\n");}
-	  collect_statistics(counter,dt,uw,u,config);
+	  collect_statistics(counter,dt,u,config);
 	}
 
-	RK2_step_1(uw,u,r,REYNOLDS,dt,Cf,kf);
+	RK3_step_1(u,uw,r,REYNOLDS,dt,Cf,kf,0);
+	
+	RK3_step_2(u,uw,r,REYNOLDS,dt,Cf,kf,0);
 
-	//Second substep
-	
-	RK2_step_05(u,uw,REYNOLDS,dt,Cf,kf);	
-	
-	F(uw,r,Delta_2); 
 
-	RK2_step_2(u,r,REYNOLDS,dt,Cf,kf);	 
+	//Second substep	
+
+	RK3_step_1(u,uw,r,REYNOLDS,dt,Cf,kf,1); 
 	
+	F(u,r,Delta_2); 
+
+	RK3_step_2(u,uw,r,REYNOLDS,dt,Cf,kf,1); 
+	
+	//Third substep
+
+	RK3_step_1(u,uw,r,REYNOLDS,dt,Cf,kf,2); 
+	
+	F(u,r,Delta_3); 
+
+	RK3_step_2(u,uw,r,REYNOLDS,dt,Cf,kf,2); 
+	
+
+
 	counter++;
 	time_elapsed+=dt;
 
@@ -210,9 +224,6 @@ int RK2step(vectorField u,float* time, case_config_t *config)
 	
 	*time=time_elapsed;
 
-	free(Delta);
-	free(Delta_1);
-	free(Delta_2);
 
 	if (RANK == 0){ printf("RK iterations finished.\n");}
 

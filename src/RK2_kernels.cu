@@ -63,7 +63,7 @@ static void __global__ rk_substep_1(float2* ux,float2* uy,float2* uz,float2* u_w
 	r2=ry[h];
 	r3=rz[h];
 
-	if(h==0)kk=1.0f;
+	if(kk<0.5f)kk=1.0f;
 
 	//Forcing
 
@@ -250,7 +250,7 @@ static void __global__ rk_substep_2(float2* ux,float2* uy,float2* uz,float2* rx,
 	
 	
 
-	if(h==0)kk=1.0f;
+	if(kk<0.5f)kk=1.0f;
 		
 	s_prod.x=r1.x*k1+r2.x*k2+r3.x*k3;
 	s_prod.y=r1.y*k1+r2.y*k2+r3.y*k3;
@@ -291,7 +291,7 @@ static dim3 blocksPerGrid;
 
 
 
-extern void RK_step_1(vectorField uw,vectorField u,vectorField r,float Re,float dt,float Cf,int kf)
+extern void RK2_step_1(vectorField uw,vectorField u,vectorField r,float Re,float dt,float Cf,int kf)
 {
 	
 		
@@ -310,7 +310,7 @@ extern void RK_step_1(vectorField uw,vectorField u,vectorField r,float Re,float 
 
 
 
-extern void RK_step_05(vectorField u,vectorField uw,float Re,float dt,float Cf,int kf)
+extern void RK2_step_05(vectorField u,vectorField uw,float Re,float dt,float Cf,int kf)
 {
 		
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
@@ -326,7 +326,7 @@ extern void RK_step_05(vectorField u,vectorField uw,float Re,float dt,float Cf,i
 }
 
 
-extern void RK_step_2(vectorField uw,vectorField r,float Re,float dt,float Cf,int kf)
+extern void RK2_step_2(vectorField uw,vectorField r,float Re,float dt,float Cf,int kf)
 {
 
 		
