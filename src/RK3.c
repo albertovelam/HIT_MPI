@@ -79,7 +79,7 @@ static float calcDt(vectorField uw){
 	float dtf=0.0f;
 	float dtv=0.0f;	
 	
-	float N3=N*N*N;
+	float N3= (float) N*N*N;
 	
 	float* umax=(float*)malloc(3*sizeof(float));
 	
@@ -87,8 +87,8 @@ static float calcDt(vectorField uw){
 
 	float c=(abs(umax[0]/N3)+abs(umax[1]/N3)+abs(umax[2]/N3));
 	
-	dtc=cfl/((N/3)*c);	
-	dtv=cfl*REYNOLDS/((N/3)*(N/3));
+	dtc=cfl/((N/3.0f)*c);	
+	dtv=cfl*REYNOLDS/((N/3.0f)*(N/3.0f));
 	/*
 	if(RANK == 0){
 	printf("\nVmax=(%f,%f,%f)\n",umax[0]/N3,umax[1]/N3,umax[2]/N3);
