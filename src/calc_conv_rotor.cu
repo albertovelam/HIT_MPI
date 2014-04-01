@@ -11,7 +11,7 @@ static __global__ void convolution_rotor(float2* wx,float2* wy,float2* wz,float2
 	int k=j%NZ;
 	j=(j-k)/NZ;
 
-	int N3=N*N*N;
+	float N3=(float) N*N*N;
 
 	float2 m1;
 	float2 m2;
