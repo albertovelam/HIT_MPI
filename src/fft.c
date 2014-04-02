@@ -191,9 +191,9 @@ void calcUmax(vectorField t,float* ux,float* uy,float* uz)
 	cudaCheck(cudaMemcpy(uz,(float*)t.z+index-1, sizeof(float), cudaMemcpyDeviceToHost),"caca");
 
 	
-	*ux=abs(*ux);
-	*uy=abs(*uy);
-	*uz=abs(*uz);
+	*ux=fabs(*ux);
+	*uy=fabs(*uy);
+	*uz=fabs(*uz);
 	
 
 	//MPI reduce

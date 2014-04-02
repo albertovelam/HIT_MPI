@@ -85,7 +85,7 @@ static float calcDt(vectorField uw){
 	
 	calcUmax(uw,umax,umax+1,umax+2);
 
-	float c=(abs(umax[0]/N3)+abs(umax[1]/N3)+abs(umax[2]/N3));
+	float c=(fabs(umax[0]/N3)+fabs(umax[1]/N3)+fabs(umax[2]/N3));
 	
 	dtc=cfl/((N/3)*c);	
 	dtv=cfl*REYNOLDS/((N/3)*(N/3));
