@@ -103,12 +103,14 @@ static float calcDt(vectorField uw){
 
 }
 
-static float caclCf(vectorField u,float2* t,int kf)
+static float caclCf(vectorField u,float2* t,int kf, case_config_t *config)
 {
 
 	//conserving keta=2
 
 	int kmax=sqrt(2.0f)*N/3.0f;
+
+	float res=config->resolution; //kmax*eta=res
 
 	float energy;
 	
@@ -120,7 +122,7 @@ static float caclCf(vectorField u,float2* t,int kf)
 	//printf("\nenergy_shell=%f\n",energy/2.0f);
 	//};
 
-	float Cf=pow(REYNOLDS,-3.0f)*pow(kmax/2.0f,4.0f)/(energy);
+	float Cf=pow(REYNOLDS,-3.0f)*pow(kmax/res,4.0f)/(energy);
 	
 	return Cf;
 
@@ -153,7 +155,7 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 
 	//Calc forcing	
 	  if(config->forcing){
-	    Cf=caclCf(u,t1,kf);
+	    Cf=caclCf(u,t1,kf,config);
 	  }
 	  else{
 	    Cf = 0.0;
