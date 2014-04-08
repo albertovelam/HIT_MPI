@@ -63,6 +63,7 @@ void starSimulation(void){
 	case_config_t case_config = {
 	  (float) config_setting_get_float(config_lookup(&config,"application.CFL")),
 	  (float) config_setting_get_float(config_lookup(&config,"application.time")),
+	  (float) config_setting_get_float(config_lookup(&config,"application.resolution")),
 	  (int) config_setting_get_bool(config_lookup(&config,"application.forcing")),
 	  (int) config_setting_get_int(config_lookup(&config,"application.stats_every")),
 	  (char *) config_setting_get_string(config_lookup(&config,"application.read.U")),
