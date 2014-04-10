@@ -12,6 +12,8 @@ int NYSIZE;
 
 cudaError_t RET;
 
+float2* AUX;
+
 //CUDA FUNCTIONS
 
 int main(int argc, char *argv[])
