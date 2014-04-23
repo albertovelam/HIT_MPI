@@ -26,9 +26,6 @@ static float2* aux_host66;
 
 static float2* buffer[6];
 
-static float2* aux_device_1;
-
-
 static cublasHandle_t cublasHandle;
 static float2 alpha[1];
 static float2 betha[1];
@@ -141,10 +138,7 @@ void setFftAsync(void){
 	cudaCheck(cudaHostAlloc((void**)&aux_host66,size,cudaHostAllocWriteCombined  ),"malloc_2");
 */
 
-	//MALLOC CUDA
-	cudaCheck(cudaMalloc((void**)&aux_device_1,size),"malloc_device");
 	
-
 	//SET TRANSPOSE
 		
 	cublasCheck(cublasCreate(&cublasHandle),"Cre");
@@ -183,19 +177,23 @@ void fftBack1T(float2* u1){
 
 	//Transpose from [x,y,z] to [x,z,y]
 
-	transpose_A(aux_device_1,u1);
+	transpose_A(AUX,u1);
 	
 	//FFT 1D on Y
 		
-	cufftCheck(cufftExecC2C(fft1_c2c,aux_device_1,u1,CUFFT_INVERSE),"forward transform");
+	cufftCheck(cufftExecC2C(fft1_c2c,AUX,u1,CUFFT_INVERSE),"forward transform");
 
-	cudaCheck(cudaMemcpy((float2*)aux_host1,(float2*)u1,size,cudaMemcpyDeviceToHost),"copy");
+	//cudaCheck(cudaMemcpy((float2*)aux_host1,(float2*)u1,size,cudaMemcpyDeviceToHost),"copy");
 
 	//Transpose from [x,z,y] to [y,x,z]
 	
-	mpiCheck(chyzx2xyz((double *)aux_host1,(double*)aux_host2,NY,NX,NZ,RANK,SIZE),"T");
+	//mpiCheck(chyzx2xyz((double *)aux_host1,(double*)aux_host2,NY,NX,NZ,RANK,SIZE),"T");
 
-	cudaCheck(cudaMemcpy((float2*)u1,(float2*)aux_host2,size,cudaMemcpyHostToDevice),"copy");
+	//cudaCheck(cudaMemcpy((float2*)u1,(float2*)aux_host2,size,cudaMemcpyHostToDevice),"copy");
+
+
+	transposeYZX2XYZ(u1,NY,NX,NZ,RANK,SIZE);
+
 
 	//FFT 2D on X	
 
@@ -211,22 +209,24 @@ void fftForw1T(float2* u1){
 	
 		cufftCheck(cufftExecR2C(fft2_r2c,(float*)u1,(float2*)u1),"forward transform");
 
-		cudaCheck(cudaMemcpy((float2*)aux_host1,(float2*)u1,size,cudaMemcpyDeviceToHost),"copy");
+		//cudaCheck(cudaMemcpy((float2*)aux_host1,(float2*)u1,size,cudaMemcpyDeviceToHost),"copy");
 			
 		//Transpose from [y,x,z] to [x,z,y]
 		
-		mpiCheck(chxyz2yzx((double *)aux_host1,(double*)aux_host2,NY,NX,NZ,RANK,SIZE),"T");
+		//mpiCheck(chxyz2yzx((double *)aux_host1,(double*)aux_host2,NY,NX,NZ,RANK,SIZE),"T");
 
 		
-		cudaCheck(cudaMemcpy((float2*)u1,(float2*)aux_host2,size,cudaMemcpyHostToDevice),"copy");
+		//cudaCheck(cudaMemcpy((float2*)u1,(float2*)aux_host2,size,cudaMemcpyHostToDevice),"copy");
+
+		transposeXYZ2YZX(u1,NY,NX,NZ,RANK,SIZE);
 
 		//FFT 1D
 
-		cufftCheck(cufftExecC2C(fft1_c2c,u1,aux_device_1,CUFFT_FORWARD),"forward transform");	 
+		cufftCheck(cufftExecC2C(fft1_c2c,u1,AUX,CUFFT_FORWARD),"forward transform");	 
 
 		//Transpose from [x,z,y] to [x,y,z]		
 
-		transpose_B(u1,aux_device_1);
+		transpose_B(u1,AUX);
 
 }
 
@@ -248,13 +248,13 @@ void fftBackMultiple(float2* u1,float2* u2,float2* u3,float2* u4,float2* u5,floa
 
 		//Transpose
 		cublasCheck(cublasSetStream(cublasHandle,STREAMS[j]),"stream");
-		transpose_A(aux_device_1,buffer[j]);
+		transpose_A(AUX,buffer[j]);
 
 	
 		//FFT 1D
 
 		cufftCheck(cufftSetStream(fft1_c2c,STREAMS[j]),"SetStream");
-		cufftCheck(cufftExecC2C(fft1_c2c,aux_device_1,buffer[j],CUFFT_INVERSE),"forward transform");	
+		cufftCheck(cufftExecC2C(fft1_c2c,AUX,buffer[j],CUFFT_INVERSE),"forward transform");	
 		cudaCheck(cudaMemcpyAsync((float2*)aux_host_1[j],(float2*)buffer[j],size,cudaMemcpyDeviceToHost,STREAMS[j]),"copy");
 		
 		}
@@ -325,11 +325,11 @@ void fftForwMultiple(float2* u1,float2* u2,float2* u3){
 
 		//FFT 1D
 		cufftCheck(cufftSetStream(fft1_c2c,STREAMS[j]),"SetStream");
-		cufftCheck(cufftExecC2C(fft1_c2c,buffer[j],aux_device_1,CUFFT_FORWARD),"forward transform");	 
+		cufftCheck(cufftExecC2C(fft1_c2c,buffer[j],AUX,CUFFT_FORWARD),"forward transform");	 
 		
 		//Transpose
 		cublasCheck(cublasSetStream(cublasHandle,STREAMS[j]),"stream");
-		transpose_A(buffer[j],aux_device_1);
+		transpose_A(buffer[j],AUX);
 		
 		}
 

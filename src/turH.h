@@ -66,6 +66,9 @@ extern int NXSIZE;
 extern int NYSIZE;
 extern int IGLOBAL;
 
+//AUX BUFFER
+
+extern float2* AUX;
 
 /////////////////////////// C FUNCTIONS /////////////////////////////////////////
 
@@ -125,6 +128,11 @@ int read_parallel_float(char *filename, float *x, int NX, int NY, int NZ,
 			 int rank, int size);
 int wrte_parallel_float(char *filename, float *x, int NX, int NY, int NZ,
 			 int rank, int size);
+
+//hit_cuda MPI
+void setTransposeCudaMpi(void);
+void transposeXYZ2YZX(float2* u1,int Nx,int Ny,int Nz,int rank,int size);
+void transposeYZX2XYZ(float2* u1,int Nx,int Ny,int Nz,int rank,int size);
 
 //Statistics
 void calc_E( vectorField u, float2* t,float* E);

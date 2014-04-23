@@ -38,7 +38,12 @@ void setUp(void){
 	
 	//RK2setup();
 	RK3setup();
-			
+	
+	size_t size=NXSIZE*NY*NZ*sizeof(float2);
+	cudaCheck(cudaMalloc( (void**)&AUX,size),"malloc_t1");		
+
+	setTransposeCudaMpi();	
+
 	return;
 
 }
