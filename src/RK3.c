@@ -147,7 +147,7 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 	float Cf;	
 
 	//RK2 time steps	
-	printf("\n time=%f",*time);
+
 	while(time_elapsed < *time){
 
 	//Calc forcing	
@@ -207,7 +207,9 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 
 	RK3_step_2(u,uw,r,REYNOLDS,dt,Cf,kf,2); 
 	
-
+	projectFourier(u);
+	if(counter%1000){	
+	imposeSymetry(u);}
 
 	counter++;
 	time_elapsed+=dt;

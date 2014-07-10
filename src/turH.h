@@ -193,7 +193,8 @@ extern void shift(vectorField t,float* Delta);
 
 extern void calc_U_W( vectorField U,vectorField W);
 
-
+//imposeSymetries
+extern void imposeSymetry(vectorField t);
 
 //Routine check
 extern void routineCheck(vectorField t);
