@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 	NYSIZE=NY/SIZE;
 	IGLOBAL=NXSIZE*RANK;
 	
-	printf("\n(%d,%d)\n",RANK,IGLOBAL);
+	printf("\n(RANK,IGLOBAL)=(%d,%d)\n",RANK,IGLOBAL);
 	
 	//CUDA SET UP
 	setUp();

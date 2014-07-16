@@ -53,7 +53,15 @@ static const int NZ=NSS/2+1;
 
 static const int THREADSPERBLOCK_IN=16;
 
-static const float REYNOLDS=NSS;
+
+static const float RES=2.0f;
+
+//static const float REYNOLDS=NSS;
+//static const float ENERGY_IN=powf(sqrt(3.0f)/2.0f*NSS/RES,4.0f)*powf(1.0f/REYNOLDS,3.0f);
+
+static const float ENERGY_IN=1.0f;
+static const float REYNOLDS=powf(sqrt(2.0f)/3.0f*NSS/RES,4.0f/3.0f)*powf(ENERGY_IN,-1.0f/3.0f);
+
 
 //Global variables
 
@@ -205,5 +213,5 @@ extern void calc_D_kernel( vectorField u, float2* t);
 
 //Forcing
 void calc_energy_shell(vectorField u,float2* t,int ks);
-
+float caclCf(vectorField u,float2* t,int kf, case_config_t *config);
 

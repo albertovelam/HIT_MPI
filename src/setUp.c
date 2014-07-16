@@ -31,7 +31,9 @@ void setUp(void){
 	*/	
 
 	cudaCheck(cudaSetDevice(RANK%Ndevices),"Set");
-	
+
+	printf("\nDEVICE=%d\n",RANK%Ndevices);	
+
 	//Setups
 	fftSetup();
 	setFftAsync();

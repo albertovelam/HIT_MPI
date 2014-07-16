@@ -63,7 +63,7 @@ static __global__ void calcEkernel(float2* ux,float2* uy,float2* uz,float2* t,in
 	
 }
 
-static __global__ void calcDkernel(float2* ux,float2* uy,float2* uz,float2* t,int IGLOBAL,int NXSIZE)
+static __global__ void calcDkernel(float2* ux,float2* uy,float2* uz,float2* t,float Reynolds,int IGLOBAL,int NXSIZE)
 {
 	
 	int i  = blockIdx.x * blockDim.x + threadIdx.x;
@@ -126,8 +126,8 @@ static __global__ void calcDkernel(float2* ux,float2* uy,float2* uz,float2* t,in
 	energy.y=2.0f*(u1.y*u1.y+u2.y*u2.y+u3.y*u3.y);	
 	}	
 
-	energy.x=(kk/REYNOLDS)*energy.x;
-	energy.y=(kk/REYNOLDS)*energy.y;
+	energy.x=(kk/Reynolds)*energy.x;
+	energy.y=(kk/Reynolds)*energy.y;
 
 	// write
 	
@@ -174,7 +174,7 @@ extern void calc_D_kernel( vectorField u, float2* t)
 	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
 	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
 		
-	calcDkernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,t,IGLOBAL,NXSIZE);
+	calcDkernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,t,REYNOLDS,IGLOBAL,NXSIZE);
 	kernelCheck(RET,"MemInfo1_caca_2",1);	
 	
 	

@@ -35,7 +35,7 @@ void RK2setup(void)
 }
 
 
-static void collect_statistics(int step, float dt, vectorField uw, vectorField u, case_config_t *config){
+static void collect_statistics(int step, float time, vectorField uw, vectorField u, case_config_t *config){
 
   float* E=(float*)malloc(sizeof(float));
   float* D=(float*)malloc(sizeof(float));
@@ -57,7 +57,7 @@ static void collect_statistics(int step, float dt, vectorField uw, vectorField u
     FILE *statfilep = fopen(config->statfile,"a");
     printf("Appending file %s\n",config->statfile);
     fprintf(statfilep,"%e,%e,%e,%e,%e,%e,%e,%e,%e\n",
-    	    dt,E[0],D[0],u_p,omega_p,eta,lambda,Rl,eta*kmax);
+    	    time,E[0],D[0],u_p,omega_p,eta,lambda,Rl,eta*kmax);
     fclose(statfilep);
   }
 
@@ -98,30 +98,6 @@ static float calcDt(vectorField uw,vectorField u, case_config_t *config){
 
 }
 
-static float caclCf(vectorField u,float2* t,int kf, case_config_t *config)
-{
-
-	//conserving keta=2
-
-	int kmax=sqrt(2.0f)*N/3.0f;
-
-	float res=config->resolution;
-
-	float energy;
-	
-	calc_energy_shell(u,t,kf);	
-
-	energy=sumElements(t);
-	
-	//if(RANK==0){
-	//printf("\nenergy_shell=%f\n",energy/2.0f);
-	//};
-
-	float Cf=pow(REYNOLDS,-3.0f)*pow(kmax/res,4.0f)/(energy);
-	
-	return Cf;
-
-}
 
 int RK2step(vectorField u,float* time, case_config_t *config)
 {
@@ -180,7 +156,7 @@ int RK2step(vectorField u,float* time, case_config_t *config)
 
 	if( counter%config->stats_every == 0 ){
 	  if (RANK == 0){ printf("Computing statistics.\n");}
-	  collect_statistics(counter,dt,uw,u,config);
+	  collect_statistics(counter,time_elapsed,uw,u,config);
 	}
 
 	RK2_step_1(uw,u,r,REYNOLDS,dt,Cf,kf);
