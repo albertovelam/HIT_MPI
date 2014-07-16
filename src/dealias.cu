@@ -105,13 +105,9 @@ static void __global__ projectionKernel(float2* ux,float2* uy,float2* uz,int IGL
 	
 	float2 s_prod;
 
-	// Avoid undefined operations
-		
-<<<<<<< HEAD
+	// Avoid undefined operations	
+
 	if(kk<0.5f) kk=1.0f;
-=======
-	//if(kk==0) kk=1.0f;
->>>>>>> 3f3e41f153c2192732c62cfb3b0856f45a709dd2
 	
 	// Proyection in fourier plane to fulfill continuity
 	// Ri=Ri+(ki*kj)*Rj/k^2	
