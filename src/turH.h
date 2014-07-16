@@ -21,6 +21,10 @@
 #define NSS 256
 #endif
 
+#ifndef RES
+#define RES 2.0f
+#endif
+
 typedef struct { float2* x;float2* y;float2* z;} vectorField;
 
 /* 
@@ -52,9 +56,6 @@ static const int NY=NSS;
 static const int NZ=NSS/2+1;
 
 static const int THREADSPERBLOCK_IN=16;
-
-
-static const float RES=2.0f;
 
 //static const float REYNOLDS=NSS;
 //static const float ENERGY_IN=powf(sqrt(3.0f)/2.0f*NSS/RES,4.0f)*powf(1.0f/REYNOLDS,3.0f);

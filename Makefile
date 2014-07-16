@@ -6,7 +6,8 @@ PATHS = -L/opt/cuda/lib64/ -L/usr/lib64 -L/usr/lib
 INCLUDES = -I/opt/cuda/include
 DEBUG = -g
 NSS:= $(shell python stripNSS.py)
-SIZE = -DNSS=${NSS}
+RES:= $(shell python stripRES.py)
+SIZE = -DNSS=${NSS} -DRES=${RES}
 GPU_SOURCES = $(wildcard src/*.cu)
 CPU_SOURCES = $(wildcard src/*.c)
 GPU_OBJECTS = $(GPU_SOURCES:.cu=.o)
