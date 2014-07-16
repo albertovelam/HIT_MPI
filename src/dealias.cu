@@ -107,7 +107,11 @@ static void __global__ projectionKernel(float2* ux,float2* uy,float2* uz,int IGL
 
 	// Avoid undefined operations
 		
+<<<<<<< HEAD
 	if(kk<0.5f) kk=1.0f;
+=======
+	//if(kk==0) kk=1.0f;
+>>>>>>> 3f3e41f153c2192732c62cfb3b0856f45a709dd2
 	
 	// Proyection in fourier plane to fulfill continuity
 	// Ri=Ri+(ki*kj)*Rj/k^2	
@@ -123,6 +127,19 @@ static void __global__ projectionKernel(float2* ux,float2* uy,float2* uz,int IGL
 	
 	r3.x=r3.x-s_prod.x*k3/kk;
 	r3.y=r3.y-s_prod.y*k3/kk;
+
+	if(i+IGLOBAL+j+k==0){
+
+	r1.x=0.0f;
+	r1.y=0.0f;
+	
+	r2.x=0.0f;
+	r2.y=0.0f;
+
+	r3.x=0.0f;
+	r3.y=0.0f;	
+	
+	}
 
 	ux[h]=r1;
 	uy[h]=r2;

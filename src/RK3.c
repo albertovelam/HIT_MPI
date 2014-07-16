@@ -67,7 +67,7 @@ static void collect_statistics(int step, float time, vectorField u, case_config_
   free(E);
 }
 
-static float calcDt(vectorField uw){	
+static float calcDt(vectorField uw,float Cf){	
 	
 	const float cfl=0.5;
 	float dt=0.0f;
@@ -86,13 +86,14 @@ static float calcDt(vectorField uw){
 	
 	dtc=cfl/((N/3.0f)*c);	
 	dtv=cfl*REYNOLDS/((N/3.0f)*(N/3.0f));
-	
+	dtf=cfl/Cf;	
+
 	if(RANK == 0){
 	printf("\nVmax=(%f,%f,%f)\n",umax[0]/N3,umax[1]/N3,umax[2]/N3);
 	}
 	
 	dt=fmin(dtc,dtv);
-	//dt=fmin(dt,dtf);
+	dt=fmin(dt,dtf);
 
 	free(umax);
 
@@ -154,7 +155,7 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 	copyVectorField(uw,u);	
 	F(uw,r,Delta_1); 
 
-	dt=calcDt(uw);	
+	dt=calcDt(uw,Cf);	
 
 	if( counter%config->stats_every == 0 ){
 	  if (RANK == 0){ printf("Computing statistics.\n");}
@@ -182,10 +183,11 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 
 	RK3_step_2(u,uw,r,REYNOLDS,dt,Cf,kf,2); 
 	
+	//Project fourier to ensure continuity
 	projectFourier(u);
 	if(counter%1000){	
 	imposeSymetry(u);}
-
+	
 	counter++;
 	time_elapsed+=dt;
 
