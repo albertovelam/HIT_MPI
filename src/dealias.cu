@@ -91,7 +91,7 @@ static void __global__ projectionKernel(float2* ux,float2* uy,float2* uz,int IGL
 	// Z indices
 	k3=(float)k;
 	
-	int kk=k1*k1+k2*k2+k3*k3;
+	float kk=k1*k1+k2*k2+k3*k3;
 
 	int h=i*NY*NZ+j*NZ+k;
 	
@@ -105,9 +105,9 @@ static void __global__ projectionKernel(float2* ux,float2* uy,float2* uz,int IGL
 	
 	float2 s_prod;
 
-	// Avoid undefined operations
-		
-	//if(kk==0) kk=1.0f;
+	// Avoid undefined operations	
+
+	if(kk<0.5f) kk=1.0f;
 	
 	// Proyection in fourier plane to fulfill continuity
 	// Ri=Ri+(ki*kj)*Rj/k^2	
