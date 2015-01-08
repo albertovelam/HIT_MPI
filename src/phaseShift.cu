@@ -4,8 +4,8 @@
 static __global__ void shift_kernel(float2* tx,float2* ty,float2* tz,float Delta_1,float Delta_2,float Delta_3,int IGLOBAL,int NXSIZE)
 {
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 	int k=j%NZ;
 	j=(j-k)/NZ;
@@ -88,8 +88,8 @@ extern void shift(vectorField t,float* Delta)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 
 	shift_kernel<<<blocksPerGrid,threadsPerBlock>>>(t.x,t.y,t.z,Delta[0],Delta[1],Delta[2],IGLOBAL,NXSIZE);

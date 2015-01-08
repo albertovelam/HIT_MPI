@@ -30,9 +30,9 @@ void setUp(void){
 	int A=SIZE/Ndevices;
 	*/	
 
-	cudaCheck(cudaSetDevice(RANK%Ndevices),"Set");
+	cudaCheck(cudaSetDevice(RANK/2/*RANK%Ndevices*/),"Set");
 
-	printf("\nDEVICE=%d\n",RANK%Ndevices);	
+	printf("\n%d using DEVICE=%d\n",RANK,RANK/2);//RANK%Ndevices);	
 
 	//Setups
 	fftSetup();
@@ -66,7 +66,6 @@ void starSimulation(void){
 	  config_destroy(&config);
 	  return;
 	}
-
 	case_config_t case_config = {
 	  (float) config_setting_get_float(config_lookup(&config,"application.CFL")),
 	  (float) config_setting_get_float(config_lookup(&config,"application.time")),
@@ -105,7 +104,14 @@ void starSimulation(void){
 	mpiCheck(read_parallel_float(case_config.readU,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
 	mpiCheck(read_parallel_float(case_config.readV,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read");
 	mpiCheck(read_parallel_float(case_config.readW,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read");
-	
+/*
+        for(int i=0; i<NXSIZE*NY*NZ; i++){
+          u_host.x[i] = { 0.5, 0.5 };
+          u_host.y[i] = { 0.0, 0.0 };
+          u_host.z[i] = { 0.0, 0.0 };
+        }	
+*/
+
 	//COPY to GPUs
 
 	cudaCheck(cudaMemcpy(u.x,u_host.x, size, cudaMemcpyHostToDevice),"MemInfo1_A");

@@ -9,8 +9,8 @@ static void __global__ rk_step_1(float2* ux,float2* uy,float2* uz,float2* u_wx,f
 	const float dseda[]={ 0.0f, -17.0f/60.0f, -5.0f/12.0f};
 	
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 
 	int k=j%NZ;
@@ -114,8 +114,8 @@ static void __global__ rk_step_2(float2* ux,float2* uy,float2* uz,float2* u_wx,f
 	const float betha[]={ 37.0f/160.0f, 5.0f/24.0f, 1.0f/6.0f};
 	const float gammad[]={ 8.0f/15.0f, 5.0f/12.0f, 3.0f/4.0f};
 	
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 
 	int k=j%NZ;
@@ -235,8 +235,8 @@ extern void RK3_step_1(vectorField u,vectorField uw,vectorField r,float Re,float
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 
 	rk_step_1<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE,nc);
@@ -254,8 +254,8 @@ extern void RK3_step_2(vectorField u,vectorField uw,vectorField r,float Re,float
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 
 	rk_step_2<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE,nc);

@@ -7,8 +7,8 @@ static __global__ void routinekernel(float2* t1,float2* t2,float2* t3,int IGLOBA
 {
 
 	
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 	int k=j%NZ;
 	j=(j-k)/NZ;
@@ -61,8 +61,8 @@ extern void routineCheck(vectorField t)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 
 	routinekernel<<<blocksPerGrid,threadsPerBlock>>>(t.x,t.y,t.z,IGLOBAL,NXSIZE);

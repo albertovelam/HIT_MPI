@@ -5,8 +5,8 @@ static __global__ void calcEnergyShellKernel(float2* ux,float2* uy,float2* uz,fl
 {
 	
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 
 	float k1,k2,k3;
 	float kk;
@@ -95,8 +95,8 @@ void calc_energy_shell(vectorField u,float2* t,int ks)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 	calcEnergyShellKernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,t,ks,IGLOBAL,NXSIZE);
 	kernelCheck(RET,"rk_initstep",1);

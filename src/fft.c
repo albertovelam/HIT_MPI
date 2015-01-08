@@ -58,6 +58,11 @@ void fftSetup(void)
 	//Set up for sum
 	sum=(float2*)malloc(NXSIZE*sizeof(float2));			
 
+        cudaHostRegister(aux_host_1,size,0);
+        cudaHostRegister(aux_host_2,size,0);
+        cudaHostRegister(sum,NXSIZE*sizeof(float2),0);
+
+
 	return;
 }
 
