@@ -405,7 +405,7 @@ int create_parallel_float(float *x, int NX, int NY, int NZ,
 	      aux[j*NZ + k] = 0.0f;
 	    }
 	    else{
-	      aux[j*NZ + k] = ((float) (rand()%10000) / 50000) - 1.0f;
+	      aux[j*NZ + k] = ((float) (rand()%10000) / 5000) - 1.0f;
 	    }
 	  }
 	}
