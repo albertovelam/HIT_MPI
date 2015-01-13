@@ -1,4 +1,5 @@
 #include "turH.h"
+#include <string.h>
 
 
 static vectorField u;
@@ -100,10 +101,18 @@ void starSimulation(void){
 	cudaCheck(cudaMalloc( (void**)&u.z,size),"malloc_t1");
 
 	//MPI COPY to nodes
-
-	mpiCheck(read_parallel_float(case_config.readU,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
-	mpiCheck(read_parallel_float(case_config.readV,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read");
-	mpiCheck(read_parallel_float(case_config.readW,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read");
+	if (strcmp(case_config.readU, "-")){
+	    // If the file name is -, then a dummy field is created
+	    if (RANK == 0){ printf("Creating dummy file.\n");}
+	    mpiCheck(create_parallel_float((float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
+	    mpiCheck(create_parallel_float((float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
+	    mpiCheck(create_parallel_float((float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
+	  }
+	else{
+	  mpiCheck(read_parallel_float(case_config.readU,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
+	  mpiCheck(read_parallel_float(case_config.readV,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read");
+	  mpiCheck(read_parallel_float(case_config.readW,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read");
+	}
 /*
         for(int i=0; i<NXSIZE*NY*NZ; i++){
           u_host.x[i] = { 0.5, 0.5 };
@@ -118,7 +127,7 @@ void starSimulation(void){
 	cudaCheck(cudaMemcpy(u.y,u_host.y, size, cudaMemcpyHostToDevice),"MemInfo1_A");
 	cudaCheck(cudaMemcpy(u.z,u_host.z, size, cudaMemcpyHostToDevice),"MemInfo1_A");
 
-	//U sep up
+	//U set up
 
 	dealias(u);
 	projectFourier(u);
