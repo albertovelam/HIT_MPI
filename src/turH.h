@@ -232,10 +232,17 @@ void fftCheck(void);
 
 ///////////CUDA FUNCTIONS////////////////////////////////////////////
 
+extern cudaStream_t compute_stream;
+
 //transpose
 extern void trans_zyx_to_yzx(float2* input, float2* output,cudaStream_t stream);
 extern void trans_yzx_to_zyx(float2* input, float2* output,cudaStream_t stream);
 extern void trans_yzx_to_zyx_yblock(float2* input, float2* output,cudaStream_t stream);
+extern void trans_zxy_to_yzx(float2* input, float2* output,cudaStream_t stream);
+extern void trans_zxy_to_zyx(float2* input, float2* output,cudaStream_t stream);
+extern void trans_zyx_to_zxy(float2* input, float2* output,cudaStream_t stream);
+extern void trans_zyx_yblock_to_yzx(float2* input, float2* output,cudaStream_t stream);
+
 
 //RK2_kernels
 extern void RK2_step_1(vectorField uw,vectorField u,vectorField r,float Re,float dt,float Cf,int kf);
@@ -262,6 +269,8 @@ extern void memoryInfo(void);
 //Rotor convolution
 
 extern void calc_conv_rotor(vectorField r, vectorField s);
+extern void calc_conv_rotor_3(vectorField r, vectorField s);
+extern void calc_conv_rotor_12(vectorField r, vectorField s, float2* temp);
 
 
 //Shift

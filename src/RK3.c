@@ -7,6 +7,7 @@
 static vectorField uw;
 static vectorField r;
 
+static int counter=0;
 
 
 void RK3setup(void)
@@ -88,8 +89,8 @@ static float calcDt(vectorField uw,float Cf){
 	dtv=cfl*REYNOLDS/((N/3.0f)*(N/3.0f));
 	dtf=cfl/Cf;	
 
-	if(RANK == 0){
-	printf("\nVmax=(%f,%f,%f)\n",umax[0]/N3,umax[1]/N3,umax[2]/N3);
+	if(RANK == 0 /*&& counter%10==0*/){
+	printf("\nVmax=( %3.8f, %3.8f, %3.8f )\n",umax[0]/N3,umax[1]/N3,umax[2]/N3);
 	}
 	
 	dt=fmin(dtc,dtv);
@@ -105,7 +106,8 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 {
 	
 	static float time_elapsed=0.0f;
-	static int counter=0;	
+//	static int counter=0;	
+        counter=0;
 
 	float pi=acos(-1.0f);
 	float om=2.0f*pi/N;	
@@ -123,8 +125,9 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 	float Cf;	
 
 	//RK2 time steps	
-
+double start_timer;
 	while(time_elapsed < *time){
+if(counter==1) start_timer=MPI_Wtime();
 double timer=MPI_Wtime();
 START_RANGE("RK3_step",0)
 START_RANGE("frcng_Dealias",1)
@@ -212,16 +215,19 @@ END_RANGE
 	time_elapsed+=dt;
 END_RANGE
 timer = MPI_Wtime()-timer;
-	if(RANK==0){
-          printf("Timer: %3.6f sec",timer);
+	if(RANK==0 /*&& counter%10==0*/){
+          printf("Timer: %3.4f sec ",timer);
 	  printf("Timestep: %d, ",counter);
 	  printf("Simulation time: %f, ",time_elapsed);
-	  printf("Forcing coefficient: %f\n",Cf);
+	  printf("Forcing coefficient: %3.8f\n",Cf);
 	}
-
 	//End of step
 	}
-	
+
+        double total_timer=MPI_Wtime()-start_timer;
+        if(RANK==0){
+          printf("\nTotal time: %3.6f sec, Average: %3.6f sec/iter \n\n",total_timer,total_timer/(double)(counter-1));
+	}
 	*time=time_elapsed;
 
 

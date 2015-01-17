@@ -77,7 +77,7 @@ extern void calc_U_W( vectorField U,vectorField W)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
 	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 	
 	calcWkernel<<<blocksPerGrid,threadsPerBlock>>>(U.x,U.y,U.z,W.x,W.y,W.z,IGLOBAL,NXSIZE);

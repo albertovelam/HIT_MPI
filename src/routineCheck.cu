@@ -61,12 +61,12 @@ extern void routineCheck(vectorField t)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+        blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
 	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 
 	routinekernel<<<blocksPerGrid,threadsPerBlock>>>(t.x,t.y,t.z,IGLOBAL,NXSIZE);
-	kernelCheck(RET,"dealias",1);
+	kernelCheck(RET,"routine kern",1);
 	
 	return;
 

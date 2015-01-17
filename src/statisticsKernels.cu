@@ -152,7 +152,7 @@ extern void calc_E_kernel( vectorField u, float2* t)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+        blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
 	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 		
 	calcEkernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,t,IGLOBAL,NXSIZE);
@@ -171,7 +171,7 @@ extern void calc_D_kernel( vectorField u, float2* t)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+        blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
 	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 		
 	calcDkernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,t,REYNOLDS,IGLOBAL,NXSIZE);

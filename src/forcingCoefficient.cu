@@ -95,7 +95,7 @@ void calc_energy_shell(vectorField u,float2* t,int ks)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
 	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 	calcEnergyShellKernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,t,ks,IGLOBAL,NXSIZE);

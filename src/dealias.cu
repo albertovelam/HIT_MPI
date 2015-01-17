@@ -193,13 +193,13 @@ extern void dealias(vectorField t)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
 	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 
 	
-	dealias_kernel<<<blocksPerGrid,threadsPerBlock>>>(t.x,t.y,t.z,IGLOBAL,NXSIZE);
-	kernelCheck(RET,"dealias",1);
+	dealias_kernel<<<blocksPerGrid,threadsPerBlock,0,compute_stream>>>(t.x,t.y,t.z,IGLOBAL,NXSIZE);
+	kernelCheck(RET,"dealias kern",1);
 	
 	return;
 }
@@ -213,12 +213,12 @@ extern void projectFourier(vectorField u)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
 	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 	
 	projectionKernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,IGLOBAL,NXSIZE);	
-	kernelCheck(RET,"dealias",1);
+	kernelCheck(RET,"projection Kern",1);
 }
 
 extern void set2zero(float2* u)
@@ -230,11 +230,11 @@ extern void set2zero(float2* u)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
 	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 	
 	zeroKernel<<<blocksPerGrid,threadsPerBlock>>>(u,IGLOBAL,NXSIZE);	
-	kernelCheck(RET,"dealias",1);
+	kernelCheck(RET,"zero kern",1);
 }
 

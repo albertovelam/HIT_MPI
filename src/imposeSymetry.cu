@@ -47,7 +47,7 @@ extern void imposeSymetry(vectorField t)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+        blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
 	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 
@@ -56,7 +56,7 @@ extern void imposeSymetry(vectorField t)
 	fftBackward(t.z);	
 
 	normalize_kernel<<<blocksPerGrid,threadsPerBlock>>>(t.x,t.y,t.z,IGLOBAL,NXSIZE);
-	kernelCheck(ret,"dealias",1);
+	kernelCheck(ret,"normalize kern",1);
 
 	fftForward(t.x);
 	fftForward(t.y);
