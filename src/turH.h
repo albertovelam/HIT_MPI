@@ -194,6 +194,8 @@ int chxyz2yzx(double *x, double *y, int Nx, int Ny, int Nz,
 	      int rank, int size);
 int read_parallel_float(char *filename, float *x, int NX, int NY, int NZ,
 			 int rank, int size);
+int create_parallel_float(float *x, int NX, int NY, int NZ,
+			 int rank, int size);
 int wrte_parallel_float(char *filename, float *x, int NX, int NY, int NZ,
 			 int rank, int size);
 
