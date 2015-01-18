@@ -8,13 +8,12 @@ static void __global__ rk_step_1(float2* ux,float2* uy,float2* uz,float2* u_wx,f
 	const float alpha[]={ 29.0f/96.0f, -3.0f/40.0f, 1.0f/6.0f};
 	const float dseda[]={ 0.0f, -17.0f/60.0f, -5.0f/12.0f};
 	
+        int ind  = blockIdx.x * blockDim.x + threadIdx.x;
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
-		
 
-	int k=j%NZ;
-	j=(j-k)/NZ;
+        int  k = ind%NZ;
+        int  i = ind/(NZ*NY);
+        int  j = ind/NZ-i*NY;
 		
 	float k1;
 	float k2;
@@ -25,7 +24,8 @@ static void __global__ rk_step_1(float2* ux,float2* uy,float2* uz,float2* u_wx,f
 
 	float2 s_prod;
 	
-	if (i<NXSIZE && j<NY && k<NZ)
+	//if (i<NXSIZE && j<NY && k<NZ)
+	if (ind<(NXSIZE*NY*NZ) )
 	{
 	
 	// X indices		
@@ -114,12 +114,19 @@ static void __global__ rk_step_2(float2* ux,float2* uy,float2* uz,float2* u_wx,f
 	const float betha[]={ 37.0f/160.0f, 5.0f/24.0f, 1.0f/6.0f};
 	const float gammad[]={ 8.0f/15.0f, 5.0f/12.0f, 3.0f/4.0f};
 	
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	//int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	//int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 
-	int k=j%NZ;
-	j=(j-k)/NZ;
+	//int k=j%NZ;
+	//j=(j-k)/NZ;
+
+        int ind  = blockIdx.x * blockDim.x + threadIdx.x;
+
+
+        int  k = ind%NZ;
+        int  i = ind/(NZ*NY);
+        int  j = ind/NZ-i*NY;
 		
 	float k1;
 	float k2;
@@ -130,7 +137,8 @@ static void __global__ rk_step_2(float2* ux,float2* uy,float2* uz,float2* u_wx,f
 	
 	float2 s_prod;
 	
-	if (i<NXSIZE && j<NY && k<NZ)
+	//if (i<NXSIZE && j<NY && k<NZ)
+	if (i<(NXSIZE * NY* NZ) )
 	{
 	
 	// X indices		
@@ -235,11 +243,19 @@ extern void RK3_step_1(vectorField u,vectorField uw,vectorField r,float Re,float
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+       blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
+
+        int elements = NXSIZE*NY*NZ;
+        dim3 mf_threadsPerBlock;
+        dim3 mf_blocksPerGrid;
+
+        // Operate over N*N*(N/2+1) matrix
+        mf_threadsPerBlock.x=128;
+        mf_blocksPerGrid.x=(elements+mf_threadsPerBlock.x-1)/mf_threadsPerBlock.x;
 
 
-	rk_step_1<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE,nc);
+	rk_step_1<<<mf_blocksPerGrid,mf_threadsPerBlock>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE,nc);
 	kernelCheck(RET,"rk_initstep",1);
 	
 	return;
@@ -251,14 +267,22 @@ extern void RK3_step_2(vectorField u,vectorField uw,vectorField r,float Re,float
 {
 
 		
-	threadsPerBlock.x=THREADSPERBLOCK_IN;
-	threadsPerBlock.y=THREADSPERBLOCK_IN;
+//	threadsPerBlock.x=THREADSPERBLOCK_IN;
+//	threadsPerBlock.y=THREADSPERBLOCK_IN;
+//
+ //       blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
+//	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+        int elements = NXSIZE*NY*NZ;
+        dim3 mf_threadsPerBlock;
+        dim3 mf_blocksPerGrid;
+
+        // Operate over N*N*(N/2+1) matrix
+        mf_threadsPerBlock.x=128;
+        mf_blocksPerGrid.x=(elements+mf_threadsPerBlock.x-1)/mf_threadsPerBlock.x;
 
 
-	rk_step_2<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE,nc);
+	rk_step_2<<<mf_blocksPerGrid,mf_threadsPerBlock>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE,nc);
 	kernelCheck(RET,"rk_substep",1);
 
 	return;

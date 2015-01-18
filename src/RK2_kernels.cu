@@ -5,8 +5,8 @@ static void __global__ rk_substep_1(float2* ux,float2* uy,float2* uz,float2* u_w
 					float2* rx, float2* ry, float2* rz,float Re,float dt,float Cf,int kf,int IGLOBAL,int NXSIZE)
 {
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 	int k=j%NZ;
 	j=(j-k)/NZ;
@@ -112,8 +112,8 @@ static void __global__ rk_substep_05(float2* ux,float2* uy,float2* uz,float2* u_
 {
 
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 
 	int k=j%NZ;
@@ -198,8 +198,8 @@ static void __global__ rk_substep_2(float2* ux,float2* uy,float2* uz,float2* rx,
 					float Re,float dt,float Cf,int kf,int IGLOBAL,int NXSIZE)
 {
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 
 	int k=j%NZ;
@@ -298,8 +298,8 @@ extern void RK2_step_1(vectorField uw,vectorField u,vectorField r,float Re,float
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 	rk_substep_1<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE);
 	kernelCheck(RET,"rk_initstep",1);
@@ -316,8 +316,8 @@ extern void RK2_step_05(vectorField u,vectorField uw,float Re,float dt,float Cf,
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 	rk_substep_05<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE);
 	kernelCheck(RET,"rk_initstep",1);
@@ -333,8 +333,8 @@ extern void RK2_step_2(vectorField uw,vectorField r,float Re,float dt,float Cf,i
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 	rk_substep_2<<<blocksPerGrid,threadsPerBlock>>>(uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE);
 	kernelCheck(RET,"rk_substep",1);

@@ -5,8 +5,8 @@ static __global__ void convolution_rotor(float2* wx,float2* wy,float2* wz,float2
 {
 
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 	int k=j%NZ;
 	j=(j-k)/NZ;
@@ -90,8 +90,8 @@ extern  void calc_conv_rotor(vectorField r, vectorField s)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+	blocksPerGrid.y=NXSIZE/threadsPerBlock.x;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 		
 	convolution_rotor<<<blocksPerGrid,threadsPerBlock>>>(r.x,r.y,r.z,s.x,s.y,s.z,NXSIZE);

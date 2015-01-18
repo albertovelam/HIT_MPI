@@ -5,8 +5,8 @@ static __global__ void calcWkernel(float2* ux,float2* uy,float2* uz,float2* wx,f
 {
 	
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 	
 	int k=j%NZ;
 	j=(j-k)/NZ;
@@ -77,8 +77,8 @@ extern void calc_U_W( vectorField U,vectorField W)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+	blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 	
 	calcWkernel<<<blocksPerGrid,threadsPerBlock>>>(U.x,U.y,U.z,W.x,W.y,W.z,IGLOBAL,NXSIZE);
 	kernelCheck(RET,"Wkernel",1);
