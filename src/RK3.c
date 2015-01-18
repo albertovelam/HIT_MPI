@@ -124,7 +124,7 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 
 	//RK2 time steps	
 
-	while(time_elapsed < *time){
+	while(time_elapsed < *time && counter < config->nsteps){
 
 	//Calc forcing	
 	  if(config->forcing){

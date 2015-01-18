@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 	
 
 	//start
-	starSimulation();
+	startSimulation();
 	
 	H5close();
 	MPI_Finalize();
