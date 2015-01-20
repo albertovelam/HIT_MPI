@@ -125,18 +125,15 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 	float Cf;	
 
 	//RK2 time steps	
-<<<<<<< HEAD
+
+	double start_timer;
 
 	while(time_elapsed < *time && counter < config->nsteps){
-
-=======
-double start_timer;
-	while(time_elapsed < *time){
-if(counter==1) start_timer=MPI_Wtime();
-double timer=MPI_Wtime();
+	  if(counter==1) start_timer=MPI_Wtime();
+	  double timer=MPI_Wtime();
 START_RANGE("RK3_step",0)
 START_RANGE("frcng_Dealias",1)
->>>>>>> 3214b607624a6db772dd2b94c44d3b491d779d30
+
 	//Calc forcing	
 	  if(config->forcing){
 	    Cf=caclCf(u,AUX,kf,config);
