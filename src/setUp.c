@@ -77,7 +77,7 @@ void startSimulation(void){
 	  (float) config_setting_get_float(config_lookup(&config,"application.CFL")),
 	  (float) config_setting_get_float(config_lookup(&config,"application.time")),
 	  (int) config_setting_get_int(config_lookup(&config,"application.nsteps")),
-	  (float) config_setting_get_float(config_lookup(&config,"application.resolution")),
+	  (float) config_setting_get_float(config_lookup(&config,"application.RES")),
 	  (int) config_setting_get_bool(config_lookup(&config,"application.forcing")),
 	  (int) config_setting_get_int(config_lookup(&config,"application.stats_every")),
 	  (char *) config_setting_get_string(config_lookup(&config,"application.read.U")),
@@ -116,14 +116,9 @@ void startSimulation(void){
 	    mpiCheck(create_parallel_float((float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
 	  }
 	else{
-	  if (RANK == 0){
-	    printf("Something really wrong happened \n");
-	    printf("%s \n", case_config.readU);
-	  }
-	  exit(1);
-	  /* mpiCheck(read_parallel_float(case_config.readU,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read"); */
-	  /* mpiCheck(read_parallel_float(case_config.readV,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read"); */
-	  /* mpiCheck(read_parallel_float(case_config.readW,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read"); */
+	  mpiCheck(read_parallel_float(case_config.readU,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
+	  mpiCheck(read_parallel_float(case_config.readV,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read");
+	  mpiCheck(read_parallel_float(case_config.readW,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read");
 	}
 /*
         for(int i=0; i<NXSIZE*NY*NZ; i++){
