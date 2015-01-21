@@ -170,7 +170,7 @@ int RK2step(vectorField u,float* time, case_config_t *config)
 	RK2_step_2(u,r,REYNOLDS,dt,Cf,kf);	 
 
 	projectFourier(u);
-	if(counter%1000){	
+	if(counter%1000==0){	
 	imposeSymetry(u);}	
 
 	counter++;
