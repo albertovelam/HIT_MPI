@@ -35,6 +35,7 @@ typedef struct { float2* x;float2* y;float2* z;} vectorField;
 typedef struct case_config_t {
   float CFL;
   float time;
+  int nsteps;
   float resolution;
   int forcing;
   int stats_every;
@@ -84,7 +85,7 @@ extern float2* AUX;
 //Set up
 
 void setUp(void);
-void starSimulation(void);
+void startSimulation(void);
 
 //RK2
 
