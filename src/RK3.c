@@ -124,8 +124,12 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 
 	//RK2 time steps	
 
+	double start_timer;
+	
 	while(time_elapsed < *time && counter < config->nsteps){
-
+	  if(counter==1) start_timer=MPI_Wtime();
+	  double timer=MPI_Wtime();
+	  
 	//Calc forcing	
 	  if(config->forcing){
 	    Cf=caclCf(u,AUX,kf,config);
@@ -190,8 +194,9 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 	
 	counter++;
 	time_elapsed+=dt;
-
+	timer = MPI_Wtime()-timer;
 	if(RANK==0){
+	  printf("Timer: %3.4f sec ",timer);
 	  printf("Timestep: %d, ",counter);
 	  printf("Simulation time: %f, ",time_elapsed);
 	  printf("Forcing coefficient: %f\n",Cf);
@@ -199,7 +204,11 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 
 	//End of step
 	}
-	
+
+	double total_timer=MPI_Wtime()-start_timer;
+	if(RANK==0){
+	  printf("\nTotal time: %3.6f sec, Average: %3.6f sec/iter \n\n",total_timer,total_timer/(double)(counter-1));
+	}
 	*time=time_elapsed;
 
 
