@@ -70,7 +70,7 @@ void startSimulation(void){
 	case_config_t case_config = {
 	  (float) config_setting_get_float(config_lookup(&config,"application.CFL")),
 	  (float) config_setting_get_float(config_lookup(&config,"application.time")),
-	  (int) config_setting_get_bool(config_lookup(&config,"application.nsteps")),
+	  (int) config_setting_get_int(config_lookup(&config,"application.nsteps")),
 	  (float) config_setting_get_float(config_lookup(&config,"application.RES")),
 	  (int) config_setting_get_bool(config_lookup(&config,"application.forcing")),
 	  (int) config_setting_get_int(config_lookup(&config,"application.stats_every")),
