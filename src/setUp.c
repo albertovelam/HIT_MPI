@@ -1,4 +1,5 @@
 #include "turH.h"
+#include <string.h>
 
 
 static vectorField u;
@@ -30,9 +31,9 @@ void setUp(void){
 	int A=SIZE/Ndevices;
 	*/	
 
-	cudaCheck(cudaSetDevice(RANK%Ndevices),"Set");
+	cudaCheck(cudaSetDevice(RANK/2/*RANK%Ndevices*/),"Set");
 
-	printf("\nDEVICE=%d\n",RANK%Ndevices);	
+	printf("\n%d using DEVICE=%d\n",RANK,RANK/2);//RANK%Ndevices);	
 
 	//Setups
 	fftSetup();
@@ -50,7 +51,7 @@ void setUp(void){
 
 }
 
-void startSimulation(void){
+void starSimulation(void){
 
         config_t config;
 	config_setting_t *read;
@@ -66,12 +67,10 @@ void startSimulation(void){
 	  config_destroy(&config);
 	  return;
 	}
-
 	case_config_t case_config = {
 	  (float) config_setting_get_float(config_lookup(&config,"application.CFL")),
 	  (float) config_setting_get_float(config_lookup(&config,"application.time")),
-	  (int) config_setting_get_int(config_lookup(&config,"application.nsteps")),
-	  (float) config_setting_get_float(config_lookup(&config,"application.resolution")),
+	  (float) config_setting_get_float(config_lookup(&config,"application.RES")),
 	  (int) config_setting_get_bool(config_lookup(&config,"application.forcing")),
 	  (int) config_setting_get_int(config_lookup(&config,"application.stats_every")),
 	  (char *) config_setting_get_string(config_lookup(&config,"application.read.U")),
@@ -102,18 +101,38 @@ void startSimulation(void){
 	cudaCheck(cudaMalloc( (void**)&u.z,size),"malloc_t1");
 
 	//MPI COPY to nodes
+	if (strcmp(case_config.readU, "-") == 0){
+	    // If the file name is -, then a dummy field is created
+	    if (RANK == 0){ printf("Creating dummy file.\n");}
+	    mpiCheck(create_parallel_float((float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
+	    mpiCheck(create_parallel_float((float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
+	    mpiCheck(create_parallel_float((float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
+	  }
+	else{
+	  if (RANK == 0){
+	    printf("Something really wrong happened \n");
+	    printf("%s \n", case_config.readU);
+	  }
+	  exit(1);
+	  mpiCheck(read_parallel_float(case_config.readU,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
+	  mpiCheck(read_parallel_float(case_config.readV,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read");
+	  mpiCheck(read_parallel_float(case_config.readW,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read");
+	}
+/*
+        for(int i=0; i<NXSIZE*NY*NZ; i++){
+          u_host.x[i] = { 0.5, 0.5 };
+          u_host.y[i] = { 0.0, 0.0 };
+          u_host.z[i] = { 0.0, 0.0 };
+        }	
+*/
 
-	mpiCheck(read_parallel_float(case_config.readU,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
-	mpiCheck(read_parallel_float(case_config.readV,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read");
-	mpiCheck(read_parallel_float(case_config.readW,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read");
-	
 	//COPY to GPUs
 
 	cudaCheck(cudaMemcpy(u.x,u_host.x, size, cudaMemcpyHostToDevice),"MemInfo1_A");
 	cudaCheck(cudaMemcpy(u.y,u_host.y, size, cudaMemcpyHostToDevice),"MemInfo1_A");
 	cudaCheck(cudaMemcpy(u.z,u_host.z, size, cudaMemcpyHostToDevice),"MemInfo1_A");
 
-	//U sep up
+	//U set up
 
 	dealias(u);
 	projectFourier(u);
