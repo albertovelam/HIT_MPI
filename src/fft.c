@@ -15,7 +15,7 @@ static float2* sum;
 static size_t size;
 
 
-static const int n_steps=16;
+static int n_steps=16;
 
 //Check
 
@@ -38,7 +38,7 @@ void fftSetup(void)
 	int n1[1]={NX};
 	
 	//2D fourier transforms
-
+        while(NXSIZE/n_steps<1) n_steps/=2;
 	cufftCheck(cufftPlanMany( &fft2_r2c,2,n2,NULL,1,0,NULL,1,0,CUFFT_R2C,NXSIZE/n_steps),"ALLOCATE_FFT2_R2C");
 	cufftCheck(cufftPlanMany( &fft2_c2r,2,n2,NULL,1,0,NULL,1,0,CUFFT_C2R,NXSIZE/n_steps),"ALLOCATE_FFT2_C2R");
 
@@ -57,6 +57,11 @@ void fftSetup(void)
 			
 	//Set up for sum
 	sum=(float2*)malloc(NXSIZE*sizeof(float2));			
+
+        cudaHostRegister(aux_host_1,size,0);
+        cudaHostRegister(aux_host_2,size,0);
+        cudaHostRegister(sum,NXSIZE*sizeof(float2),0);
+
 
 	return;
 }

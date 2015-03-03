@@ -16,7 +16,8 @@ void seedGen(void)
   
 	struct timeval t1;
 	gettimeofday(&t1, NULL); 
-	srand(t1.tv_usec * t1.tv_sec);
+//	srand(t1.tv_usec * t1.tv_sec);
+      srand(1000);
 
 	return;
 }

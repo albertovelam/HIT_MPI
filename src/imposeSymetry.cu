@@ -4,8 +4,8 @@ static __global__ void normalize_kernel(float2* t1,float2* t2,float2* t3,int IGL
 {
 
 	
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 	int k=j%NZ;
 	j=(j-k)/NZ;
@@ -46,8 +46,8 @@ extern void imposeSymetry(vectorField t)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+        blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 
 
 	fftBackward(t.x);
@@ -55,7 +55,7 @@ extern void imposeSymetry(vectorField t)
 	fftBackward(t.z);	
 
 	normalize_kernel<<<blocksPerGrid,threadsPerBlock>>>(t.x,t.y,t.z,IGLOBAL,NXSIZE);
-	kernelCheck(ret,"dealias",1);
+	kernelCheck(ret,"normalize kern",1);
 
 	fftForward(t.x);
 	fftForward(t.y);

@@ -31,10 +31,15 @@ void setUp(void){
 	int A=SIZE/Ndevices;
 	*/	
 
-	cudaCheck(cudaSetDevice(RANK/2/*RANK%Ndevices*/),"Set");
-
-	printf("\n%d using DEVICE=%d\n",RANK,RANK/2);//RANK%Ndevices);	
-
+	cudaCheck(cudaSetDevice(0 /*RANK/2*/ /*RANK%Ndevices*/),"Set");
+	printf("\n%d using DEVICE=%d\n",RANK,RANK%4);//RANK%Ndevices);	
+/*
+        int ii;
+        for(ii=1; ii<SIZE; ii++){
+          int dest=ii^RANK;
+          printf("iter %d: rank %d --> %d \n",ii,RANK,dest);
+        }
+*/
 	//Setups
 	fftSetup();
 	setFftAsync();

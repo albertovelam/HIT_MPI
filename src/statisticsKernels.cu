@@ -5,8 +5,8 @@ static __global__ void calcEkernel(float2* ux,float2* uy,float2* uz,float2* t,in
 {
 	
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j  = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 
 	int k=j%NZ;
@@ -66,8 +66,8 @@ static __global__ void calcEkernel(float2* ux,float2* uy,float2* uz,float2* t,in
 static __global__ void calcDkernel(float2* ux,float2* uy,float2* uz,float2* t,float Reynolds,int IGLOBAL,int NXSIZE)
 {
 	
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
+	int j = blockIdx.x * blockDim.x + threadIdx.x;
+	int i = blockIdx.y * blockDim.y + threadIdx.y;
 		
 
 	int k=j%NZ;
@@ -152,8 +152,8 @@ extern void calc_E_kernel( vectorField u, float2* t)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+        blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 		
 	calcEkernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,t,IGLOBAL,NXSIZE);
 	kernelCheck(RET,"MemInfo1_caca_2",1);	
@@ -171,8 +171,8 @@ extern void calc_D_kernel( vectorField u, float2* t)
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+        blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
+	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
 		
 	calcDkernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,t,REYNOLDS,IGLOBAL,NXSIZE);
 	kernelCheck(RET,"MemInfo1_caca_2",1);	

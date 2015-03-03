@@ -6,6 +6,65 @@
 #include <cublas.h>
 #include <cufft.h>
 
+
+#define CHECK_CUDART(x) do { \
+  cudaError_t res = (x); \
+  if(res != cudaSuccess) { \
+    fprintf(stderr, "%d : CUDART: %s = %d (%s) at (%s:%d)\n", RANK, #x, res, cudaGetErrorString(res),__FILE__,__LINE__); \
+    exit(1); \
+  } \
+} while(0)
+
+
+//#define USE_NVTX
+#ifdef USE_NVTX
+#include "nvToolsExt.h"
+
+const uint32_t colors4[] = { 0x0000ff00, 0x000000ff, 0x00ffff00, 0x00ff00ff, 0x0000ffff, 0x00ff0000, 0x00ffffff };
+const int num_colors4 = sizeof(colors4)/sizeof(uint32_t);
+
+#define START_RANGE_ASYNC(name,cid) { \
+        int color_id = cid; \
+        color_id = color_id%num_colors4;\
+        nvtxEventAttributes_t eventAttrib = {0}; \
+        eventAttrib.version = NVTX_VERSION; \
+        eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE; \
+        eventAttrib.colorType = NVTX_COLOR_ARGB; \
+        eventAttrib.color = colors4[color_id]; \
+        eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII; \
+        eventAttrib.message.ascii = name; \
+        nvtxRangePushEx(&eventAttrib); \
+}
+#define END_RANGE_ASYNC { \
+        nvtxRangePop(); \
+}
+
+
+#define START_RANGE(name,cid) { \
+        cudaDeviceSynchronize(); \
+        int color_id = cid; \
+        color_id = color_id%num_colors4;\
+        nvtxEventAttributes_t eventAttrib = {0}; \
+        eventAttrib.version = NVTX_VERSION; \
+        eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE; \
+        eventAttrib.colorType = NVTX_COLOR_ARGB; \
+        eventAttrib.color = colors4[color_id]; \
+        eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII; \
+        eventAttrib.message.ascii = name; \
+        nvtxRangePushEx(&eventAttrib); \
+}
+#define END_RANGE { \
+        cudaDeviceSynchronize(); \
+        nvtxRangePop(); \
+}
+#else
+#define START_RANGE(name,cid)
+#define END_RANGE
+#define START_RANGE_ASYNC(name,cid)
+#define END_RANGE_ASYNC
+#endif
+
+
 #include <hdf5.h>
 #include <hdf5_hl.h>
 
@@ -135,9 +194,9 @@ int chyzx2xyz(double *y, double *x, int Nx, int Ny, int Nz,
 int chxyz2yzx(double *x, double *y, int Nx, int Ny, int Nz,
 	      int rank, int size);
 int read_parallel_float(char *filename, float *x, int NX, int NY, int NZ,
-			int rank, int size);
+			 int rank, int size);
 int create_parallel_float(float *x, int NX, int NY, int NZ,
-			  int rank, int size);
+			 int rank, int size);
 int wrte_parallel_float(char *filename, float *x, int NX, int NY, int NZ,
 			 int rank, int size);
 
@@ -160,6 +219,12 @@ void transpose_B(float2* u_2,float2* u_1);
 void fftBack1T(float2* u1);
 void fftForw1T(float2* u1);
 
+void fftBack1T_A(float2* u1,int id);
+void fftBack1T_B(float2* u1,int id);
+
+void fftForw1T_A(float2* u1,int id);
+void fftForw1T_B(float2* u1,int id);
+
 void fftBackMultiple(float2* u1,float2* u2,float2* u3,float2* u4,float2* u5,float2* u6);
 void fftForwMultiple(float2* u1,float2* u2,float2* u3);
 void calcUmaxV2(vectorField t,float* ux,float* uy,float* uz);
@@ -169,6 +234,18 @@ float sumElementsV2(float2* buffer_1);
 void fftCheck(void);
 
 ///////////CUDA FUNCTIONS////////////////////////////////////////////
+
+extern cudaStream_t compute_stream;
+
+//transpose
+extern void trans_zyx_to_yzx(float2* input, float2* output,cudaStream_t stream);
+extern void trans_yzx_to_zyx(float2* input, float2* output,cudaStream_t stream);
+extern void trans_yzx_to_zyx_yblock(float2* input, float2* output,cudaStream_t stream);
+extern void trans_zxy_to_yzx(float2* input, float2* output,cudaStream_t stream);
+extern void trans_zxy_to_zyx(float2* input, float2* output,cudaStream_t stream);
+extern void trans_zyx_to_zxy(float2* input, float2* output,cudaStream_t stream);
+extern void trans_zyx_yblock_to_yzx(float2* input, float2* output,cudaStream_t stream);
+
 
 //RK2_kernels
 extern void RK2_step_1(vectorField uw,vectorField u,vectorField r,float Re,float dt,float Cf,int kf);
@@ -195,6 +272,8 @@ extern void memoryInfo(void);
 //Rotor convolution
 
 extern void calc_conv_rotor(vectorField r, vectorField s);
+extern void calc_conv_rotor_3(vectorField r, vectorField s);
+extern void calc_conv_rotor_12(vectorField r, vectorField s, float2* temp);
 
 
 //Shift
