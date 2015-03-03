@@ -131,6 +131,12 @@ void startSimulation(void){
         }	
 */
 
+	if (RANK == 0){
+	  printf("Parameters of the simulation: \n");
+	  printf("Reynolds number: %f \n", REYNOLDS);
+	}
+
+
 	//COPY to GPUs
 
 	cudaCheck(cudaMemcpy(u.x,u_host.x, size, cudaMemcpyHostToDevice),"MemInfo1_A");

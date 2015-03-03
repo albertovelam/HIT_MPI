@@ -84,6 +84,9 @@ const int num_colors4 = sizeof(colors4)/sizeof(uint32_t);
 #define RES 2.0f
 #endif
 
+#define ENERGY_IN 1.0f
+#define REYNOLDS powf(sqrt(2.0f)/3.0f*NSS/RES,4.0f/3.0f)*powf(ENERGY_IN,-1.0f/3.0f)
+
 typedef struct { float2* x;float2* y;float2* z;} vectorField;
 
 /* 
@@ -116,13 +119,6 @@ static const int NY=NSS;
 static const int NZ=NSS/2+1;
 
 static const int THREADSPERBLOCK_IN=16;
-
-//static const float REYNOLDS=NSS;
-//static const float ENERGY_IN=powf(sqrt(3.0f)/2.0f*NSS/RES,4.0f)*powf(1.0f/REYNOLDS,3.0f);
-
-static const float ENERGY_IN=1.0f;
-static const float REYNOLDS=powf(sqrt(2.0f)/3.0f*NSS/RES,4.0f/3.0f)*powf(ENERGY_IN,-1.0f/3.0f);
-
 
 //Global variables
 

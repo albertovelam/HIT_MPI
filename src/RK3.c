@@ -77,7 +77,7 @@ static float calcDt(vectorField uw,float Cf){
 	float dtf=0.0f;
 	float dtv=0.0f;	
 	
-	float N3= (float) N*N*N;
+	float N3= float(N)*float(N)*float(N);
 	
 	float* umax=(float*)malloc(3*sizeof(float));
 	
