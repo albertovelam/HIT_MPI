@@ -111,10 +111,9 @@ void startSimulation(void){
 	  }
 	else{
 	  if (RANK == 0){
-	    printf("Something really wrong happened \n");
+	    printf("Reading start files \n");
 	    printf("%s \n", case_config.readU);
 	  }
-	  exit(1);
 	  mpiCheck(read_parallel_float(case_config.readU,(float*)u_host.x,NX,NY,2*NZ,RANK,SIZE),"read");
 	  mpiCheck(read_parallel_float(case_config.readV,(float*)u_host.y,NX,NY,2*NZ,RANK,SIZE),"read");
 	  mpiCheck(read_parallel_float(case_config.readW,(float*)u_host.z,NX,NY,2*NZ,RANK,SIZE),"read");

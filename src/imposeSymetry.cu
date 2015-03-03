@@ -36,7 +36,6 @@ static __global__ void normalize_kernel(float2* t1,float2* t2,float2* t3,int IGL
 
 static dim3 threadsPerBlock;
 static dim3 blocksPerGrid;
-static int threadsPerBlock_in=16;
 static cudaError_t ret;
 
 // Functino to turn to zero all those modes dealiased
