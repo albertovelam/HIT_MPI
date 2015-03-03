@@ -161,10 +161,10 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 
 	dt=calcDt(uw,Cf);	
 
-	/* if( counter%config->stats_every == 0 ){ */
-	/*   if (RANK == 0){ printf("Computing statistics.\n");} */
-	/*   collect_statistics(counter,time_elapsed,u,config); */
-	/* } */
+	if( counter%config->stats_every == 0 ){
+	  if (RANK == 0){ printf("Computing statistics.\n");}
+	  collect_statistics(counter,time_elapsed,u,config);
+	}
 
 	RK3_step_1(u,uw,r,REYNOLDS,dt,Cf,kf,0);
 	
