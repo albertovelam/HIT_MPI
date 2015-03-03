@@ -15,7 +15,7 @@ static float2* sum;
 static size_t size;
 
 
-static const int n_steps=16;
+static int n_steps=16;
 
 //Check
 
@@ -38,7 +38,7 @@ void fftSetup(void)
 	int n1[1]={NX};
 	
 	//2D fourier transforms
-
+        while(NXSIZE/n_steps<1) n_steps/=2;
 	cufftCheck(cufftPlanMany( &fft2_r2c,2,n2,NULL,1,0,NULL,1,0,CUFFT_R2C,NXSIZE/n_steps),"ALLOCATE_FFT2_R2C");
 	cufftCheck(cufftPlanMany( &fft2_c2r,2,n2,NULL,1,0,NULL,1,0,CUFFT_C2R,NXSIZE/n_steps),"ALLOCATE_FFT2_C2R");
 
@@ -57,6 +57,11 @@ void fftSetup(void)
 			
 	//Set up for sum
 	sum=(float2*)malloc(NXSIZE*sizeof(float2));			
+
+        cudaHostRegister(aux_host_1,size,0);
+        cudaHostRegister(aux_host_2,size,0);
+        cudaHostRegister(sum,NXSIZE*sizeof(float2),0);
+
 
 	return;
 }
@@ -183,7 +188,7 @@ void calcUmax(vectorField t,float* ux,float* uy,float* uz)
 
 	index=cublasIsamax(size_l, (const float *)t.x, 1);
 	cudaCheck(cudaMemcpy(ux,(float*)t.x+index-1, sizeof(float), cudaMemcpyDeviceToHost),"caca");
-	
+
 	index=cublasIsamax (size_l, (const float *)t.y, 1);
 	cudaCheck(cudaMemcpy(uy,(float*)t.y+index-1, sizeof(float), cudaMemcpyDeviceToHost),"caca");
 	
@@ -203,14 +208,48 @@ void calcUmax(vectorField t,float* ux,float* uy,float* uz)
 
 }
 
+float sumElements2(float2* buffer_1){
+        float sum_all=0;
+        
+        for(int i=0;i<n_steps;i++){     
+
+        cufftCheck(cufftExecR2C(fft2_r2c,(float*)(buffer_1)+i*2*NY*NZ*NXSIZE/n_steps,buffer_1+i*NY*NZ*NXSIZE/n_steps),"forward transform");
+        
+        }
+        
+        for(int i=0;i<NXSIZE;i++){
+        
+        cudaCheck(cudaMemcpy((float2*)sum+i,(float2*)buffer_1+i*NY*NZ,sizeof(float2),cudaMemcpyDeviceToHost),"MemInfo1");
+        
+        };
+        
+        for(int i=1;i<NXSIZE;i++){
+        
+        sum[0].x+=sum[i].x;
+        }
+        reduceSUM((float*)sum,&sum_all);
+
+        return sum_all;
+
+};
 
 
 float sumElements(float2* buffer_1){
 
 	//destroza lo que haya en el buffer
-
+START_RANGE("sumElements",5)
 	float sum_all=0;
-	
+cudaMemcpy(aux_host_1,buffer_1,size,cudaMemcpyDeviceToHost);
+        int pcount=0;
+        for(int i=0; i<NXSIZE*NY*NZ; i++) { 
+          sum_all += aux_host_1[i].x;
+          if((aux_host_1[i].x != 0.f || aux_host_1[i].y != 0.f)) {
+            printf("%d aux_host[ %d ] = %g + i %g \n",pcount,i,aux_host_1[i].x,aux_host_1[i].y);
+            pcount++;
+          }
+        }
+        printf("host_sum = %g \n",sum_all);
+        sum_all = 0.f;	
 
 	for(int i=0;i<n_steps;i++){	
 
@@ -232,8 +271,8 @@ float sumElements(float2* buffer_1){
 	//MPI SUM
 
 	reduceSUM((float*)sum,&sum_all);
-
-
+printf("sum_all = %g \n",sum_all);
+END_RANGE
 	return sum_all;
 
 };

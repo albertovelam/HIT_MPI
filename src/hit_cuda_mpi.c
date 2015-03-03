@@ -35,6 +35,9 @@ void setTransposeCudaMpi(void){
 	aux_host1=(float2*)malloc(size);
 	aux_host2=(float2*)malloc(size);	
 
+        cudaHostRegister(aux_host1,size,0);
+        cudaHostRegister(aux_host2,size,0);
+
 	return;
 }
 
@@ -104,7 +107,7 @@ void transposeXYZ2YZX(float2* u1,int Nx,int Ny,int Nz,int rank,int sizeMpi){
 
 	
 }	
-		
+
 void transposeYZX2XYZ(float2* u1,int Nx,int Ny,int Nz,int rank,int sizeMpi){
 
 	 int myNx = Nx/sizeMpi;

@@ -1,14 +1,15 @@
-#include "turH.h"
+#include "turH_cuda.h"
 
 
 static __global__ void shift_kernel(float2* tx,float2* ty,float2* tz,float Delta_1,float Delta_2,float Delta_3,int IGLOBAL,int NXSIZE)
 {
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
-		
-	int k=j%NZ;
-	j=(j-k)/NZ;
+        int ind  = blockIdx.x * blockDim.x + threadIdx.x;
+
+        int  k = ind%NZ;
+        int  i = ind/(NZ*NY);
+        int  j = ind/NZ-i*NY;
+
 
 	float k1,k2,k3;
 	
@@ -31,37 +32,36 @@ static __global__ void shift_kernel(float2* tx,float2* ty,float2* tz,float Delta
 	float2 t2=ty[h];
 	float2 t3=tz[h];
 	
-	float aux_x;
-	float aux_y;
+	//float aux_x;
+	//float aux_y;
 
 	// Phase shifting by Delta;
 
-	float sine=sin(k1*Delta_1+k2*Delta_2+k3*Delta_3);
-	float cosine=cos(k1*Delta_1+k2*Delta_2+k3*Delta_3);
+//        float sine=sin(k1*Delta_1+k2*Delta_2+k3*Delta_3);
+//        float cosine=cos(k1*Delta_1+k2*Delta_2+k3*Delta_3);
+
+
+	float sine, cosine;
+        sincosf(k1*Delta_1+k2*Delta_2+k3*Delta_3,&sine,&cosine);
 	
 	//t1;
 
-	aux_x=cosine*t1.x-sine*t1.y;
-	aux_y=sine*t1.x+cosine*t1.y;
-
-	t1.x=aux_x;
-	t1.y=aux_y;
+        float2 temp1;
+	temp1.x=cosine*t1.x-sine*t1.y;
+	temp1.y=sine*t1.x+cosine*t1.y;
+        t1 = temp1;
 	
 	//t2;
-
-	aux_x=cosine*t2.x-sine*t2.y;
-	aux_y=sine*t2.x+cosine*t2.y;
-
-	t2.x=aux_x;
-	t2.y=aux_y;	
+        float2 temp2;
+	temp2.x=cosine*t2.x-sine*t2.y;
+        temp2.y=sine*t2.x+cosine*t2.y;	
+        t2 = temp2;
 
 	//t3	
-	
-	aux_x=cosine*t3.x-sine*t3.y;
-	aux_y=sine*t3.x+cosine*t3.y;
-
-	t3.x=aux_x;
-	t3.y=aux_y;	
+        float2 temp3;	
+	temp3.x=cosine*t3.x-sine*t3.y;
+	temp3.y=sine*t3.x+cosine*t3.y;
+        t3 = temp3;
 	
 	
 	tx[h]=t1;
@@ -83,16 +83,15 @@ extern void shift(vectorField t,float* Delta)
 {
 
 
-	//SET BLOCK DIMENSIONS
-	
-	threadsPerBlock.x=THREADSPERBLOCK_IN;
-	threadsPerBlock.y=THREADSPERBLOCK_IN;
+         int elements = NXSIZE*NY*NZ;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+        // Operate over N*N*(N/2+1) matrix
+        threadsPerBlock.x=128;
+
+        blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 
 
-	shift_kernel<<<blocksPerGrid,threadsPerBlock>>>(t.x,t.y,t.z,Delta[0],Delta[1],Delta[2],IGLOBAL,NXSIZE);
+	shift_kernel<<<blocksPerGrid,threadsPerBlock,0,compute_stream>>>(t.x,t.y,t.z,Delta[0],Delta[1],Delta[2],IGLOBAL,NXSIZE);
 	kernelCheck(RET,"dealias",1);
 	
 	return;

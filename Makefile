@@ -23,5 +23,11 @@ $(CPU_OBJECTS): src/%.o: src/%.c
 $(GPU_OBJECTS): src/%.o: src/%.cu
 	$(NVCC) -c $(INCLUDES) $(SIZE) $< -o $@
 
+tools: biggerbox.o
+	$(CC) $(PATHS) $(LIBS) tools/biggerbox.o -o biggerbox.bin
+
+biggerbox.o:
+	$(CC) $(INCLUDES) $(SIZE) -c tools/biggerbox.c -o tools/biggerbox.o
+
 clean:
 	rm src/*.o hitMPI

@@ -1,4 +1,4 @@
-#include"turH.h"
+#include"turH_cuda.h"
 
 
 static void __global__ rk_step_1(float2* ux,float2* uy,float2* uz,float2* u_wx,float2* u_wy,float2* u_wz,
@@ -9,13 +9,13 @@ static void __global__ rk_step_1(float2* ux,float2* uy,float2* uz,float2* u_wx,f
 	const float dseda[]={ 0.0f, -17.0f/60.0f, -5.0f/12.0f};
 	
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
 		
+        int ind  = blockIdx.x * blockDim.x + threadIdx.x;
 
-	int k=j%NZ;
-	j=(j-k)/NZ;
-		
+        int  k = ind%NZ;
+        int  i = ind/(NZ*NY);
+        int  j = ind/NZ-i*NY;
+
 	float k1;
 	float k2;
 	float k3;
@@ -25,7 +25,8 @@ static void __global__ rk_step_1(float2* ux,float2* uy,float2* uz,float2* u_wx,f
 
 	float2 s_prod;
 	
-	if (i<NXSIZE && j<NY && k<NZ)
+	//if (i<NXSIZE && j<NY && k<NZ)
+        if( ind < (NXSIZE*NY*NZ) )	
 	{
 	
 	// X indices		
@@ -114,13 +115,15 @@ static void __global__ rk_step_2(float2* ux,float2* uy,float2* uz,float2* u_wx,f
 	const float betha[]={ 37.0f/160.0f, 5.0f/24.0f, 1.0f/6.0f};
 	const float gammad[]={ 8.0f/15.0f, 5.0f/12.0f, 3.0f/4.0f};
 	
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
 		
+         int ind  = blockIdx.x * blockDim.x + threadIdx.x;
 
-	int k=j%NZ;
-	j=(j-k)/NZ;
-		
+
+        int  k = ind%NZ;
+        int  i = ind/(NZ*NY);
+        int  j = ind/NZ-i*NY;
+
+
 	float k1;
 	float k2;
 	float k3;
@@ -130,7 +133,8 @@ static void __global__ rk_step_2(float2* ux,float2* uy,float2* uz,float2* u_wx,f
 	
 	float2 s_prod;
 	
-	if (i<NXSIZE && j<NY && k<NZ)
+//	if (i<NXSIZE && j<NY && k<NZ)
+         if( ind < (NXSIZE*NY*NZ) )
 	{
 	
 	// X indices		
@@ -230,16 +234,15 @@ static dim3 blocksPerGrid;
 
 extern void RK3_step_1(vectorField u,vectorField uw,vectorField r,float Re,float dt,float Cf,int kf,int nc)
 {
-	
-		
-	threadsPerBlock.x=THREADSPERBLOCK_IN;
-	threadsPerBlock.y=THREADSPERBLOCK_IN;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+        int elements = NXSIZE*NY*NZ;
 
+        // Operate over N*N*(N/2+1) matrix
+        threadsPerBlock.x=128;
 
-	rk_step_1<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE,nc);
+        blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
+
+	rk_step_1<<<blocksPerGrid,threadsPerBlock,0,compute_stream>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE,nc);
 	kernelCheck(RET,"rk_initstep",1);
 	
 	return;
@@ -249,16 +252,14 @@ extern void RK3_step_1(vectorField u,vectorField uw,vectorField r,float Re,float
 
 extern void RK3_step_2(vectorField u,vectorField uw,vectorField r,float Re,float dt,float Cf,int kf,int nc)
 {
+        int elements = NXSIZE*NY*NZ;
 
-		
-	threadsPerBlock.x=THREADSPERBLOCK_IN;
-	threadsPerBlock.y=THREADSPERBLOCK_IN;
+        // Operate over N*N*(N/2+1) matrix
+        threadsPerBlock.x=128;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+        blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 
-
-	rk_step_2<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE,nc);
+	rk_step_2<<<blocksPerGrid,threadsPerBlock,0,compute_stream>>>(u.x,u.y,u.z,uw.x,uw.y,uw.z,r.x,r.y,r.z,Re,dt,Cf,kf,IGLOBAL,NXSIZE,nc);
 	kernelCheck(RET,"rk_substep",1);
 
 	return;

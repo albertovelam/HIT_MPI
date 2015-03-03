@@ -1,22 +1,24 @@
 
-#include "turH.h"
+#include "turH_cuda.h"
 
 static __global__ void calcEkernel(float2* ux,float2* uy,float2* uz,float2* t,int IGLOBAL,int NXSIZE)
 {
 	
 
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
-		
+        int ind  = blockIdx.x * blockDim.x + threadIdx.x;
 
-	int k=j%NZ;
-	j=(j-k)/NZ;
+
+        int  k = ind%NZ;
+        int  i = ind/(NZ*NY);
+        int  j = ind/NZ-i*NY;
+
 	
-	float N3=(float)N*N*N;
+	float N3=(float)N*(float)N*(float)N;
 
 	int h=i*NY*NZ+j*NZ+k;
 
-	if(i<NXSIZE &&  j<NY && k<NZ )
+//	if(i<NXSIZE &&  j<NY && k<NZ )
+        if( ind < (NXSIZE*NY*NZ) )
 	{
 
 	// Read {u1,u2,u3}	
@@ -66,18 +68,18 @@ static __global__ void calcEkernel(float2* ux,float2* uy,float2* uz,float2* t,in
 static __global__ void calcDkernel(float2* ux,float2* uy,float2* uz,float2* t,float Reynolds,int IGLOBAL,int NXSIZE)
 {
 	
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
-		
+        int ind  = blockIdx.x * blockDim.x + threadIdx.x;
 
-	int k=j%NZ;
-	j=(j-k)/NZ;
+        int  k = ind%NZ;
+        int  i = ind/(NZ*NY);
+        int  j = ind/NZ-i*NY;
 	
-	float N3=(float)N*N*N;
+	float N3=(float)N*(float)N*(float)N;
 
 	int h=i*NY*NZ+j*NZ+k;
 
-	if(i<NXSIZE &&  j<NY && k<NZ )
+//	if(i<NXSIZE &&  j<NY && k<NZ )
+        if( ind < (NXSIZE*NY*NZ) )
 	{
 
 	// Read {u1,u2,u3}	
@@ -146,16 +148,15 @@ static dim3 blocksPerGrid;
 
 extern void calc_E_kernel( vectorField u, float2* t)
 {
-	
-	//SET BLOCK DIMENSIONS
-	
-	threadsPerBlock.x=THREADSPERBLOCK_IN;
-	threadsPerBlock.y=THREADSPERBLOCK_IN;
+         int elements = NXSIZE*NY*NZ;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
-		
-	calcEkernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,t,IGLOBAL,NXSIZE);
+        // Operate over N*N*(N/2+1) matrix
+        threadsPerBlock.x=128;
+
+        blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
+
+	
+	calcEkernel<<<blocksPerGrid,threadsPerBlock,0,compute_stream>>>(u.x,u.y,u.z,t,IGLOBAL,NXSIZE);
 	kernelCheck(RET,"MemInfo1_caca_2",1);	
 
 	
@@ -165,16 +166,15 @@ extern void calc_E_kernel( vectorField u, float2* t)
 
 extern void calc_D_kernel( vectorField u, float2* t)
 {
-	
-	//SET BLOCK DIMENSIONS
-	
-	threadsPerBlock.x=THREADSPERBLOCK_IN;
-	threadsPerBlock.y=THREADSPERBLOCK_IN;
+         int elements = NXSIZE*NY*NZ;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+        // Operate over N*N*(N/2+1) matrix
+        threadsPerBlock.x=128;
+
+        blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
+
 		
-	calcDkernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,t,REYNOLDS,IGLOBAL,NXSIZE);
+	calcDkernel<<<blocksPerGrid,threadsPerBlock,0,compute_stream>>>(u.x,u.y,u.z,t,REYNOLDS,IGLOBAL,NXSIZE);
 	kernelCheck(RET,"MemInfo1_caca_2",1);	
 	
 	

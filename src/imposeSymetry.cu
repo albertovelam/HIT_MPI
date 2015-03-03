@@ -1,22 +1,17 @@
-#include "turH.h"
+#include "turH_cuda.h"
 
 static __global__ void normalize_kernel(float2* t1,float2* t2,float2* t3,int IGLOBAL,int NXSIZE)
 {
 
 	
-	int i  = blockIdx.x * blockDim.x + threadIdx.x;
-	int j = blockIdx.y * blockDim.y + threadIdx.y;
-		
-	int k=j%NZ;
-	j=(j-k)/NZ;
-
-	int h=i*NY*NZ+j*NZ+k;
+	int h  = blockIdx.x * blockDim.x + threadIdx.x;
 	
-	if(i<NXSIZE &&  j<NY && k<NZ )
+	//if(i<NXSIZE &&  j<NY && k<NZ )
+        if( h < (NXSIZE*NY*NZ) )
 	{
 
 	
-	float N3=(float)(N*N*N);	
+	float N3=(float)N*(float)N*(float)N;	
 	
 	t1[h].x/=N3;
 	t2[h].x/=N3;
@@ -36,7 +31,6 @@ static __global__ void normalize_kernel(float2* t1,float2* t2,float2* t3,int IGL
 
 static dim3 threadsPerBlock;
 static dim3 blocksPerGrid;
-static int threadsPerBlock_in=16;
 static cudaError_t ret;
 
 // Functino to turn to zero all those modes dealiased
@@ -44,19 +38,20 @@ static cudaError_t ret;
 extern void imposeSymetry(vectorField t)
 {
 	
-	threadsPerBlock.x=THREADSPERBLOCK_IN;
-	threadsPerBlock.y=THREADSPERBLOCK_IN;
+       int elements = NXSIZE*NY*NZ;
 
-	blocksPerGrid.x=NXSIZE/threadsPerBlock.x;
-	blocksPerGrid.y=NY*NZ/threadsPerBlock.y;
+        // Operate over N*N*(N/2+1) matrix
+        threadsPerBlock.x=128;
+
+        blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 
 
 	fftBackward(t.x);
 	fftBackward(t.y);
 	fftBackward(t.z);	
 
-	normalize_kernel<<<blocksPerGrid,threadsPerBlock>>>(t.x,t.y,t.z,IGLOBAL,NXSIZE);
-	kernelCheck(ret,"dealias",1);
+	normalize_kernel<<<blocksPerGrid,threadsPerBlock,0,compute_stream>>>(t.x,t.y,t.z,IGLOBAL,NXSIZE);
+	kernelCheck(ret,"normalize kern",1);
 
 	fftForward(t.x);
 	fftForward(t.y);
