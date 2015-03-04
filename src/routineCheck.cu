@@ -23,8 +23,6 @@ static __global__ void routinekernel(float2* t1,float2* t2,float2* t3,int IGLOBA
 	
 	// Z indices
 	k3=(float)k;
-	
-	int kk=k1*k1+k2*k2+k3*k3;
 
 	int h=i*NY*NZ+j*NZ+k;
 	
