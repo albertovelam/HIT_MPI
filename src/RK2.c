@@ -74,7 +74,7 @@ static float calcDt(vectorField uw,vectorField u, case_config_t *config){
 	float dtf=0.0f;
 	float dtv=0.0f;	
 	
-	float N3= float(N)*float(N)*float(N);
+	float N3=(float)N*(float)N*(float)N;
 	
 	float* umax=(float*)malloc(3*sizeof(float));
 	
@@ -170,7 +170,7 @@ int RK2step(vectorField u,float* time, case_config_t *config)
 	RK2_step_2(u,r,REYNOLDS,dt,Cf,kf);	 
 
 	projectFourier(u);
-	if(counter%1000==0){	
+	if(counter%1000){	
 	imposeSymetry(u);}	
 
 	counter++;

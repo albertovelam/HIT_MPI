@@ -1,15 +1,15 @@
-#include "turH.h"
+#include "turH_cuda.h"
 
 
 static __global__ void shift_kernel(float2* tx,float2* ty,float2* tz,float Delta_1,float Delta_2,float Delta_3,int IGLOBAL,int NXSIZE)
 {
 
-	int ind  = blockIdx.x * blockDim.x + threadIdx.x;
+        int ind  = blockIdx.x * blockDim.x + threadIdx.x;
 
-		
         int  k = ind%NZ;
         int  i = ind/(NZ*NY);
         int  j = ind/NZ-i*NY;
+
 
 	float k1,k2,k3;
 	
@@ -25,8 +25,7 @@ static __global__ void shift_kernel(float2* tx,float2* ty,float2* tz,float Delta
 
 	int h=i*NY*NZ+j*NZ+k;
 	
-	//if(i<NXSIZE &&  j<NY && k<NZ )
-	if( ind < (NXSIZE*NY*NZ) )
+	if(i<NXSIZE &&  j<NY && k<NZ )
 	{
 
 	float2 t1=tx[h];
@@ -83,7 +82,8 @@ static dim3 blocksPerGrid;
 extern void shift(vectorField t,float* Delta)
 {
 
-        int elements = NXSIZE*NY*NZ;
+
+         int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
         threadsPerBlock.x=128;

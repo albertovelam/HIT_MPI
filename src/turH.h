@@ -6,11 +6,22 @@
 #include <cublas.h>
 #include <cufft.h>
 
+extern int pipe_xfer;
+extern int min_kb_xfer;
+extern char host_name[MPI_MAX_PROCESSOR_NAME];
+extern char mybus[16];
+extern int together;
+
+extern MPI_Request *send_requests;
+extern MPI_Request *recv_requests;
+extern MPI_Status *send_status;
+extern MPI_Status *recv_status;
+
 
 #define CHECK_CUDART(x) do { \
   cudaError_t res = (x); \
   if(res != cudaSuccess) { \
-    fprintf(stderr, "%d : CUDART: %s = %d (%s) at (%s:%d)\n", RANK, #x, res, cudaGetErrorString(res),__FILE__,__LINE__); \
+    fprintf(stderr, "rank %d host: %s device: %s CUDART Error: %s = %d (%s) at (%s:%d)\n", RANK, host_name, mybus, #x, res, cudaGetErrorString(res),__FILE__,__LINE__); \
     exit(1); \
   } \
 } while(0)
@@ -84,9 +95,6 @@ const int num_colors4 = sizeof(colors4)/sizeof(uint32_t);
 #define RES 2.0f
 #endif
 
-#define ENERGY_IN 1.0f
-#define REYNOLDS powf(sqrt(2.0f)/3.0f*NSS/RES,4.0f/3.0f)*powf(ENERGY_IN,-1.0f/3.0f)
-
 typedef struct { float2* x;float2* y;float2* z;} vectorField;
 
 /* 
@@ -97,7 +105,6 @@ typedef struct { float2* x;float2* y;float2* z;} vectorField;
 typedef struct case_config_t {
   float CFL;
   float time;
-  int nsteps;
   float resolution;
   int forcing;
   int stats_every;
@@ -120,6 +127,13 @@ static const int NZ=NSS/2+1;
 
 static const int THREADSPERBLOCK_IN=16;
 
+//static const float REYNOLDS=NSS;
+//static const float ENERGY_IN=powf(sqrt(3.0f)/2.0f*NSS/RES,4.0f)*powf(1.0f/REYNOLDS,3.0f);
+
+static const float ENERGY_IN=1.0f;
+static const float REYNOLDS=powf(sqrt(2.0f)/3.0f*NSS/RES,4.0f/3.0f)*powf(ENERGY_IN,-1.0f/3.0f);
+
+
 //Global variables
 
 extern cudaError_t RET;
@@ -140,7 +154,7 @@ extern float2* AUX;
 //Set up
 
 void setUp(void);
-void startSimulation(void);
+void starSimulation(void);
 
 //RK2
 
@@ -167,11 +181,13 @@ void fftBackward(float2* buffer_1);
 
 void calcUmax(vectorField t,float* ux,float* uy,float* uz);
 float sumElements(float2* buffer);
-
+float sumElements2(float2* buffer);
 //F
 
 void copyVectorField(vectorField u1,vectorField u2);
 void F( vectorField u, vectorField r,float* Delta);
+
+float Fdt( vectorField u, vectorField r,float* Delta,float Cf);
 
 void mpiCheck(int error, const char* function );
 
@@ -192,7 +208,7 @@ int chxyz2yzx(double *x, double *y, int Nx, int Ny, int Nz,
 int read_parallel_float(char *filename, float *x, int NX, int NY, int NZ,
 			 int rank, int size);
 int create_parallel_float(float *x, int NX, int NY, int NZ,
-			 int rank, int size);
+                         int rank, int size);
 int wrte_parallel_float(char *filename, float *x, int NX, int NY, int NZ,
 			 int rank, int size);
 
@@ -232,6 +248,11 @@ void fftCheck(void);
 ///////////CUDA FUNCTIONS////////////////////////////////////////////
 
 extern cudaStream_t compute_stream;
+extern cudaStream_t d2h_stream;
+extern cudaStream_t h2d_stream;
+extern cudaEvent_t events[1000];
+
+extern void calc_Umax2(vectorField u, float* temp);
 
 //transpose
 extern void trans_zyx_to_yzx(float2* input, float2* output,cudaStream_t stream);

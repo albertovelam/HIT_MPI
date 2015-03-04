@@ -1,5 +1,5 @@
 
-#include "turH.h"
+#include "turH_cuda.h"
 
 static __global__ void convolution_rotor_3(float2* wx,float2* wy,float2* wz,float2* ux,float2* uy,float2* uz, int elements)
 {
@@ -7,7 +7,7 @@ static __global__ void convolution_rotor_3(float2* wx,float2* wy,float2* wz,floa
 
         int h  = blockIdx.x * blockDim.x + threadIdx.x;
 
-        float N3=(float) N*N*N;
+        float N3=(float) N* (float) N* (float)N;
 
         float2 m3;
 
@@ -56,7 +56,7 @@ static __global__ void convolution_rotor_12(float2* wx,float2* wy,float2* wz,flo
 
 
 	int h  = blockIdx.x * blockDim.x + threadIdx.x;
-        float N3=(float) N*N*N;
+        float N3=(float) N* (float) N* (float)N;
 
 	float2 m1;
 	float2 m2;

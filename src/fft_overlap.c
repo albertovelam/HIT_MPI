@@ -290,9 +290,41 @@ getchar();
         cudaEventRecord(events[stid],compute_stream);
         cudaStreamWaitEvent(d2h_stream,events[stid],0);
 //#define USE_GPU_MPI
-#define PIPE_XFER
+//#define PIPE_XFER
+//#define USE_TOGETHER
+//#define USE_NB_COMM
+
 #ifdef PIPE_XFER
+//if(pipe_xfer==1){
 #ifndef USE_GPU_MPI
+       //int together=1;
+       //while( (NZ*myNx*myNy*sizeof(float2)*together) < min_kb_xfer*1024 ) together *= 2;
+       //printf("together = %d\n",together);  
+//#ifdef USE_TOGETHER
+#if 0
+        int ii,ii_chunk;
+        for(ii_chunk=0; ii_chunk<(SIZE+together-1)/together; ii_chunk++){
+          if(ii_chunk==0){
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest!=RANK){
+                CHECK_CUDART(cudaMemcpyAsync((float2*)aux_host_1[stid]+dest*NZ*myNx*myNy,(float2*)aux_dev[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyDeviceToHost,d2h_stream));
+                cudaEventRecord(events[30+128*stid+ii],d2h_stream);              
+              }
+            }
+          }else{
+            int min_dest=999999;
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest<min_dest) min_dest=dest;
+            }
+            CHECK_CUDART(cudaMemcpyAsync((float2*)aux_host_1[stid]+min_dest*NZ*myNx*myNy,(float2*)aux_dev[stid]+min_dest*NZ*myNx*myNy,together*NZ*myNx*myNy*sizeof(float2),cudaMemcpyDeviceToHost,d2h_stream));
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              cudaEventRecord(events[30+128*stid+ii],d2h_stream);
+            }
+          }
+        }
+#else
        int iter;
        for(iter=1; iter<SIZE; iter++){
          int dest = RANK ^ iter;
@@ -300,10 +332,13 @@ getchar();
          cudaEventRecord(events[30+128*stid+iter],d2h_stream);
        }
 #endif
+#endif
 #else
+//}else{
         cudaCheck(cudaMemcpyAsync((float2*)aux_host_1[stid],(float2*)aux_dev[stid],size,cudaMemcpyDeviceToHost,d2h_stream),"copy");
         cudaEventRecord(events[10+stid],d2h_stream);
 #endif
+//}//pipe_xfer
 }
 
 void fftBack1T_B(float2* u1, int stid){
@@ -314,15 +349,106 @@ void fftBack1T_B(float2* u1, int stid){
         cublasCheck(cublasSetStream(cublasHandle,compute_stream),"stream");
         cufftCheck(cufftSetStream(fft2_c2r,compute_stream),"SetStream");
 #ifdef PIPE_XFER
+//if(pipe_xfer==1){
 #ifdef USE_GPU_MPI
        int iter;
        for(iter=1; iter<SIZE; iter++){
          int dest = RANK ^ iter;
          cudaEventSynchronize(events[stid]);
          MPI_Sendrecv(aux_dev[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, u1+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+         //TODO: remove need to do this copy
          cudaCheck(cudaMemcpyAsync((float2*)aux_dev[stid]+dest*NZ*myNx*myNy,(float2*)u1+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyDeviceToDevice,h2d_stream),"copy");
        }
-        cudaEventRecord(events[20+stid],h2d_stream);
+       cudaEventRecord(events[20+stid],h2d_stream);
+#else
+#ifdef USE_TOGETHER
+        int ii,ii_chunk;
+        for(ii_chunk=0; ii_chunk<(SIZE+together-1)/together; ii_chunk++){
+          if(ii_chunk==0){
+#ifdef USE_NB_COMM
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest!=RANK){
+                MPI_Irecv(aux_host_2[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &recv_requests[ii]);
+              }
+            }
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest!=RANK){
+                CHECK_CUDART( cudaEventSynchronize(events[30+128*stid+ii]) );
+                MPI_Isend(aux_host_1[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &send_requests[ii]);
+              }
+            }
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest!=RANK){
+                MPI_Wait(&recv_requests[ii],&recv_status[ii]);
+                CHECK_CUDART( cudaMemcpyAsync((float2*)aux_dev[stid]+dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream) );
+              }
+            }
+#else
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest!=RANK){
+                CHECK_CUDART( cudaEventSynchronize(events[30+128*stid+ii]) );
+START_RANGE_ASYNC("MPI",3)
+                MPI_Sendrecv(aux_host_1[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, aux_host_2[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+END_RANGE_ASYNC
+                CHECK_CUDART( cudaMemcpyAsync((float2*)aux_dev[stid]+dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream) );
+              }
+            }
+#endif
+          }else{
+#ifdef USE_NB_COMM
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              MPI_Irecv(aux_host_2[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &recv_requests[ii]);
+            }
+            int min_dest=999999;
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest<min_dest) min_dest=dest;
+              CHECK_CUDART( cudaEventSynchronize(events[30+128*stid+ii]) );
+              MPI_Isend(aux_host_1[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &send_requests[ii]);
+            }
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+                int dest=ii^RANK;
+                MPI_Wait(&recv_requests[ii],&recv_status[ii]);
+                CHECK_CUDART( cudaMemcpyAsync((float2*)aux_dev[stid]+dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream) );
+            }
+            //CHECK_CUDART( cudaMemcpyAsync((float2*)aux_dev[stid]+min_dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+min_dest*NZ*myNx*myNy,together*NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream) );
+#else
+            int min_dest=999999;
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest<min_dest) min_dest=dest;
+              CHECK_CUDART( cudaEventSynchronize(events[30+128*stid+ii]) );
+START_RANGE_ASYNC("MPI",3)
+              MPI_Sendrecv(aux_host_1[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, aux_host_2[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+END_RANGE_ASYNC
+            }
+            CHECK_CUDART( cudaMemcpyAsync((float2*)aux_dev[stid]+min_dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+min_dest*NZ*myNx*myNy,together*NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream) );
+#endif
+          } 
+        }
+#else
+#ifdef USE_NB_COMM
+       int iter;
+       for(iter=1; iter<SIZE; iter++){
+         int dest = RANK ^ iter;
+         MPI_Irecv(aux_host_2[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &recv_requests[iter]);
+       }
+       for(iter=1; iter<SIZE; iter++){
+         int dest = RANK ^ iter;
+         cudaEventSynchronize(events[30+128*stid+iter]);
+         MPI_Send(aux_host_1[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);//, &send_requests[iter]);
+/*       }
+       for(iter=1; iter<SIZE; iter++){
+         int dest = RANK ^ iter;
+*/
+         MPI_Wait(&recv_requests[iter],&recv_status[iter]);
+         CHECK_CUDART( cudaMemcpyAsync((float2*)aux_dev[stid]+dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream) );
+       }
 #else
        //cudaCheck(cudaMemcpyAsync((float2*)u1+RANK*NZ*myNx*myNy,(float2*)aux_dev[stid]+RANK*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyDeviceToDevice,compute_stream),"copy");
        int iter;
@@ -334,20 +460,24 @@ START_RANGE_ASYNC("MPI",3)
 END_RANGE_ASYNC
          cudaCheck(cudaMemcpyAsync((float2*)aux_dev[stid]+dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream),"copy");
        }
-        cudaEventRecord(events[20+stid],h2d_stream);
+#endif
+#endif
+        CHECK_CUDART( cudaEventRecord(events[20+stid],h2d_stream) );
 #endif
 #else
-        cudaEventSynchronize(events[10+stid]);
+//}else{
+        CHECK_CUDART( cudaEventSynchronize(events[10+stid]) );
 START_RANGE_ASYNC("MPI",3)
         MPIErr = MPI_Alltoall(aux_host_1[stid],NZ*myNx*myNy,MPI_DOUBLE,
                               aux_host_2[stid],NZ*myNx*myNy,MPI_DOUBLE,
                               MPI_COMM_WORLD);
 END_RANGE_ASYNC
         mpiCheck(MPIErr,"transpoze");
-        cudaCheck(cudaMemcpyAsync((float2*)aux_dev[stid],(float2*)aux_host_2[stid],size,cudaMemcpyHostToDevice,h2d_stream),"copy");
+        CHECK_CUDART( cudaMemcpyAsync((float2*)aux_dev[stid],(float2*)aux_host_2[stid],size,cudaMemcpyHostToDevice,h2d_stream) );
         cudaEventRecord(events[20+stid],h2d_stream);
 #endif
-        cudaStreamWaitEvent(compute_stream,events[20+stid],0);
+//}//pipe_xfer
+        CHECK_CUDART( cudaStreamWaitEvent(compute_stream,events[20+stid],0) );
 
         //transpose(aux_dev[stid],(const float2*)u1,NZ*NY/SIZE,NY);//EP: last NX was NY
         //transposeBatched(u1,(const float2*)aux_dev[stid],NY,NZ,NY/SIZE); //EP: NX was NY
@@ -401,13 +531,39 @@ void fftForw1T_A(float2* u1, int stid){
 //  transpose(u1,(const float2*)aux_dev[stid],NY,myNx*NZ);
   trans_zyx_to_zxy(u1, aux_dev[stid], compute_stream);  
 
-  cudaEventRecord(events[stid],compute_stream);
-  cudaStreamWaitEvent(d2h_stream,events[stid],0);
+  CHECK_CUDART( cudaEventRecord(events[stid],compute_stream) );
+  CHECK_CUDART( cudaStreamWaitEvent(d2h_stream,events[stid],0) );
 //  cudaCheck(cudaMemcpyAsync((float2*)aux_host_1[stid],(float2*)aux_dev[stid],size,cudaMemcpyDeviceToHost,d2h_stream),"copy");
 //  cudaEventRecord(events[10+stid],d2h_stream);
 
 #ifdef PIPE_XFER
+//if(pipe_xfer==1){
 #ifndef USE_GPU_MPI
+#if 0
+//#ifdef USE_TOGETHER
+        int ii,ii_chunk;
+        for(ii_chunk=0; ii_chunk<(SIZE+together-1)/together; ii_chunk++){
+          if(ii_chunk==0){
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest!=RANK){
+                CHECK_CUDART( cudaMemcpyAsync((float2*)aux_host_1[stid]+dest*NZ*myNx*myNy,(float2*)aux_dev[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyDeviceToHost,d2h_stream) );
+                CHECK_CUDART( cudaEventRecord(events[30+128*stid+ii],d2h_stream) );
+              }
+            }
+          }else{
+            int min_dest=999999;
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest<min_dest) min_dest=dest;
+            }
+            CHECK_CUDART(cudaMemcpyAsync((float2*)aux_host_1[stid]+min_dest*NZ*myNx*myNy,(float2*)aux_dev[stid]+min_dest*NZ*myNx*myNy,together*NZ*myNx*myNy*sizeof(float2),cudaMemcpyDeviceToHost,d2h_stream));
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              CHECK_CUDART( cudaEventRecord(events[30+128*stid+ii],d2h_stream) );
+            }
+          }
+        }
+#else
        int iter;
        for(iter=1; iter<SIZE; iter++){
          int dest = RANK ^ iter;
@@ -415,10 +571,13 @@ void fftForw1T_A(float2* u1, int stid){
          cudaEventRecord(events[30+128*stid+iter],d2h_stream);
        }
 #endif
+#endif
 #else
+//}else{
         cudaCheck(cudaMemcpyAsync((float2*)aux_host_1[stid],(float2*)aux_dev[stid],size,cudaMemcpyDeviceToHost,d2h_stream),"copy");
         cudaEventRecord(events[10+stid],d2h_stream);
 #endif
+//}//pipe_xfer
 
 
 }
@@ -431,6 +590,7 @@ void fftForw1T_B(float2* u1, int stid){
         cufftCheck(cufftSetStream(fft1_c2c,compute_stream),"SetStream");
 
 #ifdef PIPE_XFER
+//if(pipe_xfer==1){
 #ifdef USE_GPU_MPI
        int iter;
        for(iter=1; iter<SIZE; iter++){
@@ -441,6 +601,96 @@ void fftForw1T_B(float2* u1, int stid){
        }
         cudaEventRecord(events[20+stid],h2d_stream);
 #else
+#ifdef USE_TOGETHER
+        int ii,ii_chunk;
+        for(ii_chunk=0; ii_chunk<(SIZE+together-1)/together; ii_chunk++){
+          if(ii_chunk==0){
+#ifdef USE_NB_COMM
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest!=RANK){
+                MPI_Irecv(aux_host_2[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &recv_requests[ii]);
+              }
+            }
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest!=RANK){
+                CHECK_CUDART( cudaEventSynchronize(events[30+128*stid+ii]) );
+                MPI_Isend(aux_host_1[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &send_requests[ii]);
+              }
+            }
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest!=RANK){
+                MPI_Wait(&recv_requests[ii],&recv_status[ii]);
+                CHECK_CUDART( cudaMemcpyAsync((float2*)aux_dev[stid]+dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream) );
+              }
+            }
+#else
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest!=RANK){
+                CHECK_CUDART( cudaEventSynchronize(events[30+128*stid+ii]) );
+START_RANGE_ASYNC("MPI",3)
+                MPI_Sendrecv(aux_host_1[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, aux_host_2[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+END_RANGE_ASYNC
+                CHECK_CUDART(cudaMemcpyAsync((float2*)aux_dev[stid]+dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream));
+              }
+            }
+#endif
+          }else{
+#ifdef USE_NB_COMM
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              MPI_Irecv(aux_host_2[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &recv_requests[ii]);
+            }
+            int min_dest=999999;
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest<min_dest) min_dest=dest;
+              CHECK_CUDART( cudaEventSynchronize(events[30+128*stid+ii]) );
+              MPI_Isend(aux_host_1[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &send_requests[ii]);
+            }
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+                int dest=ii^RANK;
+                MPI_Wait(&recv_requests[ii],&recv_status[ii]);
+                CHECK_CUDART( cudaMemcpyAsync((float2*)aux_dev[stid]+dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream) );
+            }
+            //CHECK_CUDART( cudaMemcpyAsync((float2*)aux_dev[stid]+min_dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+min_dest*NZ*myNx*myNy,together*NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream) );
+#else
+            int min_dest=999999;
+            for(ii=ii_chunk*together; ii<(ii_chunk+1)*together && ii<SIZE; ii++){
+              int dest=ii^RANK;
+              if(dest<min_dest) min_dest=dest;
+              CHECK_CUDART( cudaEventSynchronize(events[30+128*stid+ii]) );
+START_RANGE_ASYNC("MPI",3)
+              MPI_Sendrecv(aux_host_1[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, aux_host_2[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+END_RANGE_ASYNC
+            }
+            CHECK_CUDART(cudaMemcpyAsync((float2*)aux_dev[stid]+min_dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+min_dest*NZ*myNx*myNy,together*NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream));
+#endif
+          }
+        }
+#else
+#ifdef USE_NB_COMM
+       int iter;
+       for(iter=1; iter<SIZE; iter++){
+         int dest = RANK ^ iter;
+         MPI_Irecv(aux_host_2[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD, &recv_requests[iter]);
+       }
+       for(iter=1; iter<SIZE; iter++){
+         int dest = RANK ^ iter;
+         cudaEventSynchronize(events[30+128*stid+iter]);
+         MPI_Send(aux_host_1[stid]+dest*NZ*myNx*myNy, NZ*myNx*myNy, MPI_DOUBLE, dest, 0, MPI_COMM_WORLD);//, &send_requests[iter]);
+/*       }
+       
+       for(iter=1; iter<SIZE; iter++){
+         int dest = RANK ^ iter;
+*/
+         MPI_Wait(&recv_requests[iter],&recv_status[iter]);
+         CHECK_CUDART( cudaMemcpyAsync((float2*)aux_dev[stid]+dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream) );
+       }
+#else
        int iter;
        for(iter=1; iter<SIZE; iter++){
          int dest = RANK ^ iter;
@@ -450,9 +700,12 @@ START_RANGE_ASYNC("MPI",3)
 END_RANGE_ASYNC
          cudaCheck(cudaMemcpyAsync((float2*)aux_dev[stid]+dest*NZ*myNx*myNy,(float2*)aux_host_2[stid]+dest*NZ*myNx*myNy,NZ*myNx*myNy*sizeof(float2),cudaMemcpyHostToDevice,h2d_stream),"copy");
        }
+#endif
+#endif
         cudaEventRecord(events[20+stid],h2d_stream);
 #endif
 #else
+//}else{
         cudaEventSynchronize(events[10+stid]);
 START_RANGE_ASYNC("MPI",3)
         MPIErr = MPI_Alltoall(aux_host_1[stid],NZ*myNx*myNy,MPI_DOUBLE,
@@ -463,6 +716,7 @@ END_RANGE_ASYNC
         cudaCheck(cudaMemcpyAsync((float2*)aux_dev[stid],(float2*)aux_host_2[stid],size,cudaMemcpyHostToDevice,h2d_stream),"copy");
         cudaEventRecord(events[20+stid],h2d_stream);
 #endif
+//}//pipe_xfer
 
         cudaStreamWaitEvent(compute_stream,events[20+stid],0);
         //transposeBatched(u1,(const float2*)aux_dev[stid],myNx*NZ,myNy,SIZE);

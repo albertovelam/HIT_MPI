@@ -1,17 +1,17 @@
 
 
-#include "turH.h"
+#include "turH_cuda.h"
 
 
 static __global__ void dealias_kernel(float2* t1,float2* t2,float2* t3,int IGLOBAL,int NXSIZE)
 {
 
 	
-	int j  = blockIdx.x * blockDim.x + threadIdx.x;
-	int i = blockIdx.y * blockDim.y + threadIdx.y;
-		
-	int k=j%NZ;
-	j=(j-k)/NZ;
+        int ind  = blockIdx.x * blockDim.x + threadIdx.x;
+
+        int  k = ind%NZ;
+        int  i = ind/(NZ*NY);
+        int  j = ind/NZ-i*NY;
 
 	float k1,k2,k3;
 	
@@ -28,7 +28,8 @@ static __global__ void dealias_kernel(float2* t1,float2* t2,float2* t3,int IGLOB
 
 	int h=i*NY*NZ+j*NZ+k;
 	
-	if(i<NXSIZE &&  j<NY && k<NZ )
+	//if(i<NXSIZE &&  j<NY && k<NZ )
+        if( ind < (NXSIZE*NY*NZ) )
 	{
 
 	// Dealiasing also in the corners of the cube
@@ -73,12 +74,12 @@ static __global__ void dealias_kernel(float2* t1,float2* t2,float2* t3,int IGLOB
 
 static void __global__ projectionKernel(float2* ux,float2* uy,float2* uz,int IGLOBAL,int NXSIZE)
 {
-	
-	int j  = blockIdx.x * blockDim.x + threadIdx.x;
-	int i = blockIdx.y * blockDim.y + threadIdx.y;
-		
-	int k=j%NZ;
-	j=(j-k)/NZ;
+        int ind  = blockIdx.x * blockDim.x + threadIdx.x;
+
+        int  k = ind%NZ;
+        int  i = ind/(NZ*NY);
+        int  j = ind/NZ-i*NY;
+
 
 	float k1,k2,k3;
 	
@@ -95,7 +96,8 @@ static void __global__ projectionKernel(float2* ux,float2* uy,float2* uz,int IGL
 
 	int h=i*NY*NZ+j*NZ+k;
 	
-	if(i<NXSIZE &&  j<NY && k<NZ )
+	//if(i<NXSIZE &&  j<NY && k<NZ )
+        if( ind < (NXSIZE*NY*NZ) )
 	{	
 
 
@@ -150,15 +152,16 @@ static void __global__ projectionKernel(float2* ux,float2* uy,float2* uz,int IGL
 static void __global__ zeroKernel(float2* ux,int IGLOBAL,int NXSIZE)
 {
 	
-	int j  = blockIdx.x * blockDim.x + threadIdx.x;
-	int i = blockIdx.y * blockDim.y + threadIdx.y;
-		
-	int k=j%NZ;
-	j=(j-k)/NZ;
+        int ind  = blockIdx.x * blockDim.x + threadIdx.x;
+
+        int  k = ind%NZ;
+        int  i = ind/(NZ*NY);
+        int  j = ind/NZ-i*NY;
 
 	int h=i*NY*NZ+j*NZ+k;	
 	
-	if(i<NXSIZE &&  j<NY && k<NZ )
+	//if(i<NXSIZE &&  j<NY && k<NZ )
+        if( ind < (NXSIZE*NY*NZ) )
 	{	
 
 
@@ -187,14 +190,11 @@ extern void dealias(vectorField t)
 {
 	
 
+        int elements = NXSIZE*NY*NZ;
 
-	//SET BLOCK DIMENSIONS
-	
-	threadsPerBlock.x=THREADSPERBLOCK_IN;
-	threadsPerBlock.y=THREADSPERBLOCK_IN;
+        threadsPerBlock.x=128;
 
-	blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
-	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
+        blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 
 
 	
@@ -208,33 +208,31 @@ extern void projectFourier(vectorField u)
 {
 
 
-	//SET BLOCK DIMENSIONS
-	
-	threadsPerBlock.x=THREADSPERBLOCK_IN;
-	threadsPerBlock.y=THREADSPERBLOCK_IN;
+        int elements = NXSIZE*NY*NZ;
 
-	blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
-	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
+        // Operate over N*N*(N/2+1) matrix
+        threadsPerBlock.x=128;
+
+        blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
+	
 
 	
-	projectionKernel<<<blocksPerGrid,threadsPerBlock>>>(u.x,u.y,u.z,IGLOBAL,NXSIZE);	
+	projectionKernel<<<blocksPerGrid,threadsPerBlock,0,compute_stream>>>(u.x,u.y,u.z,IGLOBAL,NXSIZE);	
 	kernelCheck(RET,"projection Kern",1);
 }
 
 extern void set2zero(float2* u)
 {
 
+        int elements = NXSIZE*NY*NZ;
 
-	//SET BLOCK DIMENSIONS
-	
-	threadsPerBlock.x=THREADSPERBLOCK_IN;
-	threadsPerBlock.y=THREADSPERBLOCK_IN;
+        // Operate over N*N*(N/2+1) matrix
+        threadsPerBlock.x=128;
 
-	blocksPerGrid.y=(NXSIZE+THREADSPERBLOCK_IN-1)/THREADSPERBLOCK_IN;
-	blocksPerGrid.x=NY*NZ/threadsPerBlock.y;
+        blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 
 	
-	zeroKernel<<<blocksPerGrid,threadsPerBlock>>>(u,IGLOBAL,NXSIZE);	
+	zeroKernel<<<blocksPerGrid,threadsPerBlock,0,compute_stream>>>(u,IGLOBAL,NXSIZE);	
 	kernelCheck(RET,"zero kern",1);
 }
 

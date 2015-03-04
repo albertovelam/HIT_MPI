@@ -1,5 +1,5 @@
 
-#include "turH.h"
+#include "turH_cuda.h"
 
 void kernelCheck( cudaError_t error, const char* function, int a=1)
 {

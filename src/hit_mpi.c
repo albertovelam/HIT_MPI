@@ -1,6 +1,5 @@
+
 #include "turH.h"
-#include <time.h>
-#include <stdlib.h>
 
 int chxyz2yzx(double *x, double *y, int Nx, int Ny, int Nz,
 	      int rank, int size){
@@ -135,6 +134,59 @@ int chyzx2xyz(double *y, double *x, int Nx, int Ny, int Nz,
     }  
   }
   return MPIErr;
+}
+
+int create_parallel_float(float *x, int NX, int NY, int NZ,
+                          int rank, int size){
+  int i,j,k;
+  int MPIErr;
+  float *aux;
+
+  srand(time(NULL));
+  int myNX = NX/size;
+  aux = (float *) malloc(NY*NZ*sizeof(float));
+
+  for (i=0; i<NX; i++){
+    if (i/myNX == 0){
+      if (rank == 0){
+        for (j=0; j<NY; j++){
+          for (k=0; k<NZ; k++){
+            if (i == 0 && j == 0 && k == 0){
+              aux[j*NZ + k] = 0.0f;
+            }
+            else{
+              aux[j*NZ + k] = ((float) (rand()%10000) / 5000) - 1.0f;
+            }
+          }
+        }
+        for (j=0; j<NY; j++){
+          for (k=0; k<NZ; k++){
+            x[(i%myNX)*NY*NZ + j*NZ + k] = aux[j*NZ + k];
+          }
+        }
+      }
+    }
+    else{
+      if (i/myNX == rank){
+        MPIErr = MPI_Recv(aux,NY*NZ,MPI_FLOAT,0,11,MPI_COMM_WORLD,
+                          MPI_STATUS_IGNORE);
+        for (j=0; j<NY; j++){
+          for (k=0; k<NZ; k++){
+            x[(i%myNX)*NY*NZ + j*NZ + k] = aux[j*NZ + k];
+          }
+        }
+      }
+
+      else if (rank == 0){
+        MPIErr = MPI_Send(aux,NY*NZ,MPI_FLOAT,i/myNX,11,MPI_COMM_WORLD);
+      }
+    }
+    MPIErr = MPI_Barrier(MPI_COMM_WORLD);
+  }
+
+  free(aux);
+  return MPIErr;
+
 }
 
 int wrte_parallel_double(char *filename, double *x, int Nx, int Ny, int Nz,
@@ -386,61 +438,8 @@ int wrte_parallel_float(char *filename, float *x, int NX, int NY, int NZ,
   return MPIErr;
 }
 
-int create_parallel_float(float *x, int NX, int NY, int NZ,
-			  int rank, int size){
-  int i,j,k;
-  int MPIErr;
-  float *aux;
-  
-  srand(time(NULL));
-  int myNX = NX/size;
-  aux = (float *) malloc(NY*NZ*sizeof(float));
-  
-  for (i=0; i<NX; i++){
-    if (i/myNX == 0){
-      if (rank == 0){
-	for (j=0; j<NY; j++){
-	  for (k=0; k<NZ; k++){
-	    if (i == 0 && j == 0 && k == 0){
-	      aux[j*NZ + k] = 0.0f;
-	    }
-	    else{
-	      aux[j*NZ + k] = ((float) (rand()%10000) / 5000) - 1.0f;
-	    }
-	  }
-	}
-	for (j=0; j<NY; j++){
-	  for (k=0; k<NZ; k++){
-	    x[(i%myNX)*NY*NZ + j*NZ + k] = aux[j*NZ + k];
-	  }
-	}
-      }
-    }
-    else{
-      if (i/myNX == rank){
-	MPIErr = MPI_Recv(aux,NY*NZ,MPI_FLOAT,0,11,MPI_COMM_WORLD,
-			  MPI_STATUS_IGNORE); 
-	for (j=0; j<NY; j++){
-	  for (k=0; k<NZ; k++){
-	    x[(i%myNX)*NY*NZ + j*NZ + k] = aux[j*NZ + k];
-	  }
-	}
-      }
-      
-      else if (rank == 0){
-	MPIErr = MPI_Send(aux,NY*NZ,MPI_FLOAT,i/myNX,11,MPI_COMM_WORLD);
-      }
-    }
-    MPIErr = MPI_Barrier(MPI_COMM_WORLD);
-  }
-  
-  free(aux);
-  return MPIErr;
-  
-}
-
 int read_parallel_float(char *filename, float *x, int NX, int NY, int NZ,
-			int rank, int size){
+			 int rank, int size){
   int i,j,k;
   int MPIErr;
   herr_t H5Err;

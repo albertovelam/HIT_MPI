@@ -1,4 +1,4 @@
-#include"turH.h"
+#include"turH_cuda.h"
 
 static void __global__ trans_zyx_yblock_to_yzx_kernel(float2* input, float2* output)
 {

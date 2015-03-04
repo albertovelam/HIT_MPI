@@ -1,4 +1,4 @@
-#include "turH.h"
+#include "turH_cuda.h"
 
 
 static void __global__ rk_substep_1(float2* ux,float2* uy,float2* uz,float2* u_wx,float2* u_wy,float2* u_wz,
