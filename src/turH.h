@@ -107,11 +107,13 @@ typedef struct case_config_t {
   float time;
   float resolution;
   int forcing;
+  int tauS;
   int stats_every;
   char *readU;
   char *readV;
   char *readW;
   char *statfile;
+  char *path;
   char *writeU;
   char *writeV;
   char *writeW;
@@ -315,3 +317,6 @@ extern void calc_D_kernel( vectorField u, float2* t);
 void calc_energy_shell(vectorField u,float2* t,int ks);
 float caclCf(vectorField u,float2* t,int kf, case_config_t *config);
 
+// T_ij S_ij computation
+float calc_T(vectorField u,vectorField A,vectorField B,float2* aux,float alpha);
+float calc_tauS(vectorField u,vectorField A,vectorField B,float2* aux,float alpha);
