@@ -696,7 +696,7 @@ extern void calcS(vectorField A,int d){
 
 }
 
-extern void calc_tauS(float2* OUT,vectorField A,vectorField B,int d){
+extern void calc_tauS_cuda(float2* OUT,vectorField A,vectorField B,int d){
 
 	threadsPerBlock.x=THREADSPERBLOCK_IN;
 	threadsPerBlock.y=THREADSPERBLOCK_IN;

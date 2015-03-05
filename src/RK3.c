@@ -57,7 +57,7 @@ void RK3setup(void)
 }
 
 static void calcCascadeFluxes(vectorField u,vectorField a,vectorField b,
-			      float2* aux,float time,int counter, case_config_t config){
+			      float2* aux,float time,int counter, case_config_t *config){
 
 
   float eta=pow(REYNOLDS,-3.0f/4.0f)*pow(ENERGY_IN,-1.0f/4.0f);
@@ -65,6 +65,7 @@ static void calcCascadeFluxes(vectorField u,vectorField a,vectorField b,
   float alpha[6]={10.f*eta,20.f*eta,40.f*eta,80.f*eta,160.0f*eta,320.0f*eta};
   float tauS[6];
   float T[6];
+  char thispath[100];
   
   
   for(int i=0;i<6;i++){
@@ -77,15 +78,18 @@ static void calcCascadeFluxes(vectorField u,vectorField a,vectorField b,
   FILE* fp_T;
   
   if(RANK==0){
-    
-    fp_tauS=fopen(strcat(config.path,"/tauS.dat"),"a");
-    fp_T=fopen(strcat(config.path,"/T.dat"),"a");
+    strcpy(thispath,config->path);
+    fp_tauS=fopen(strcat(thispath,"/tauS.dat"),"a");
+    /* strcpy(thispath,config->path); */
+    /* fp_T=fopen(strcat(thispath,"/T.dat"),"a"); */
+    strcpy(thispath,config->path);
+    printf("TauS path: %s",strcat(thispath,"/tauS.dat"));
     
     fprintf(fp_tauS,"%05d %e %e %e %e %e %e %e\n ",counter,time,tauS[0],tauS[1],tauS[2],tauS[3],tauS[4],tauS[5]);
-    fprintf(fp_T,"%05d %e %e %e %e %e %e %e\n ",counter,time,T[0],T[1],T[2],T[3],T[4],T[5]);
+    //    fprintf(fp_T,"%05d %e %e %e %e %e %e %e\n ",counter,time,T[0],T[1],T[2],T[3],T[4],T[5]);
     
     fclose(fp_tauS);
-    fclose(fp_T);
+    // fclose(fp_T);
     
   }
   
@@ -215,7 +219,7 @@ int RK3step(vectorField u,float* time, case_config_t *config)
 	//RK2 time steps	
 	double start_timer;
  
-	if (config.tauS){
+	if (config->tauS){
 	  calcCascadeFluxes(u,uw,r,AUX,time_elapsed,counter,config);
 	}
 
@@ -316,7 +320,7 @@ timer = MPI_Wtime()-timer;
 	  printf("Forcing coefficient: %3.8f\n",Cf);
 	}
 	//End of step
-	if (counter%100==0 && config.tauS){
+	if (counter%100==0 && config->tauS){
 	  calcCascadeFluxes(u,uw,r,AUX,time_elapsed,counter,config);
 	}
 	}

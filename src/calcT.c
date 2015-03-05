@@ -35,7 +35,7 @@ static void calc_uuS(vectorField u,vectorField A,vectorField B,float2* OUT,float
 	fftBackward(B.z);
 	
 	//Calc Sij
-	calc_tauS(OUT,A,B,0);
+	calc_tauS_cuda(OUT,A,B,0);
 
 	return;
 }
@@ -113,7 +113,7 @@ static void calc_udTau(vectorField u,vectorField A,vectorField B,float2* OUT,flo
 
 	//PROBLEMA //CHECK !!!!!
 
-	calc_tauS(OUT,A,B,d);
+	calc_tauS_cuda(OUT,A,B,d);
 	
 	return;
 }
@@ -184,7 +184,7 @@ static void calc_tauSii(vectorField u,vectorField A,vectorField B,float2* OUT,fl
 
 	//CHECK	
 
-	calc_tauS(OUT,A,B,0);
+	calc_tauS_cuda(OUT,A,B,0);
 
 
 }

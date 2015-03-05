@@ -320,3 +320,11 @@ float caclCf(vectorField u,float2* t,int kf, case_config_t *config);
 // T_ij S_ij computation
 float calc_T(vectorField u,vectorField A,vectorField B,float2* aux,float alpha);
 float calc_tauS(vectorField u,vectorField A,vectorField B,float2* aux,float alpha);
+void normalize(vectorField);
+void gaussFilter_High(vectorField, float);
+void gaussFilter(vectorField, float);
+void calcUU(vectorField, int);
+void calcS(vectorField, int);
+void calc_tauS_cuda(float2*, vectorField,vectorField,int);
+void calcL(vectorField,vectorField);
+void calc_dTau(vectorField, int);
