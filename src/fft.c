@@ -244,11 +244,11 @@ cudaMemcpy(aux_host_1,buffer_1,size,cudaMemcpyDeviceToHost);
         for(int i=0; i<NXSIZE*NY*NZ; i++) { 
           sum_all += aux_host_1[i].x;
           if((aux_host_1[i].x != 0.f || aux_host_1[i].y != 0.f)) {
-            printf("%d aux_host[ %d ] = %g + i %g \n",pcount,i,aux_host_1[i].x,aux_host_1[i].y);
+            //printf("%d aux_host[ %d ] = %g + i %g \n",pcount,i,aux_host_1[i].x,aux_host_1[i].y);
             pcount++;
           }
         }
-        printf("host_sum = %g \n",sum_all);
+        //printf("host_sum = %g \n",sum_all);
         sum_all = 0.f;	
 
 	for(int i=0;i<n_steps;i++){	
@@ -271,7 +271,7 @@ cudaMemcpy(aux_host_1,buffer_1,size,cudaMemcpyDeviceToHost);
 	//MPI SUM
 
 	reduceSUM((float*)sum,&sum_all);
-printf("sum_all = %g \n",sum_all);
+	//printf("sum_all = %g \n",sum_all);
 END_RANGE
 	return sum_all;
 

@@ -1,4 +1,4 @@
-#include"turH_cuda.h"
+#include "turH.h"
 
 
 static void __global__ rk_step_1(float2* ux,float2* uy,float2* uz,float2* u_wx,float2* u_wy,float2* u_wz,
@@ -238,7 +238,7 @@ extern void RK3_step_1(vectorField u,vectorField uw,vectorField r,float Re,float
         int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 
@@ -255,7 +255,7 @@ extern void RK3_step_2(vectorField u,vectorField uw,vectorField r,float Re,float
         int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 

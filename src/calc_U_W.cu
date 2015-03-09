@@ -1,4 +1,4 @@
-#include "turH_cuda.h"
+#include "turH.h"
 
 
 static __global__ void calcWkernel(float2* ux,float2* uy,float2* uz,float2* wx,float2* wy,float2* wz,int IGLOBAL,int NXSIZE)

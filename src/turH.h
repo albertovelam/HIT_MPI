@@ -95,6 +95,10 @@ const int num_colors4 = sizeof(colors4)/sizeof(uint32_t);
 #define RES 2.0f
 #endif
 
+#ifndef THREADSPERBLOCK_NU
+#define THREADSPERBLOCK_NU 512
+#endif
+
 typedef struct { float2* x;float2* y;float2* z;} vectorField;
 
 /* 
@@ -107,11 +111,13 @@ typedef struct case_config_t {
   float time;
   float resolution;
   int forcing;
+  int tauS;
   int stats_every;
   char *readU;
   char *readV;
   char *readW;
   char *statfile;
+  char *path;
   char *writeU;
   char *writeV;
   char *writeW;
@@ -315,3 +321,14 @@ extern void calc_D_kernel( vectorField u, float2* t);
 void calc_energy_shell(vectorField u,float2* t,int ks);
 float caclCf(vectorField u,float2* t,int kf, case_config_t *config);
 
+// T_ij S_ij computation
+float calc_T(vectorField u,vectorField A,vectorField B,float2* aux,float alpha);
+float calc_tauS(vectorField u,vectorField A,vectorField B,float2* aux,float alpha);
+void normalize(vectorField);
+void gaussFilter_High(vectorField, float);
+void gaussFilter(vectorField, float);
+void calcUU(vectorField, int);
+void calcS(vectorField, int);
+void calc_tauS_cuda(float2*, vectorField,vectorField,int);
+void calcL(vectorField,vectorField);
+void calc_dTau(vectorField, int);

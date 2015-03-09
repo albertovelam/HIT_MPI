@@ -1,5 +1,4 @@
-
-#include "turH_cuda.h"
+#include "turH.h"
 
 static __global__ void calcEkernel(float2* ux,float2* uy,float2* uz,float2* t,int IGLOBAL,int NXSIZE)
 {
@@ -151,7 +150,7 @@ extern void calc_E_kernel( vectorField u, float2* t)
          int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 
@@ -169,7 +168,7 @@ extern void calc_D_kernel( vectorField u, float2* t)
          int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 

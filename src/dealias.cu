@@ -1,6 +1,4 @@
-
-
-#include "turH_cuda.h"
+#include "turH.h"
 
 
 static __global__ void dealias_kernel(float2* t1,float2* t2,float2* t3,int IGLOBAL,int NXSIZE)
@@ -192,7 +190,7 @@ extern void dealias(vectorField t)
 
         int elements = NXSIZE*NY*NZ;
 
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 
@@ -211,7 +209,7 @@ extern void projectFourier(vectorField u)
         int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 	
@@ -227,7 +225,7 @@ extern void set2zero(float2* u)
         int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 
