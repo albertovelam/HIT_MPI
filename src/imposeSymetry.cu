@@ -41,7 +41,7 @@ extern void imposeSymetry(vectorField t)
        int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 

@@ -190,7 +190,7 @@ extern void dealias(vectorField t)
 
         int elements = NXSIZE*NY*NZ;
 
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 
@@ -209,7 +209,7 @@ extern void projectFourier(vectorField u)
         int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 	
@@ -225,7 +225,7 @@ extern void set2zero(float2* u)
         int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 

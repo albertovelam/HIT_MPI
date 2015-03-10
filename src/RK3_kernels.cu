@@ -238,7 +238,7 @@ extern void RK3_step_1(vectorField u,vectorField uw,vectorField r,float Re,float
         int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 
@@ -255,7 +255,7 @@ extern void RK3_step_2(vectorField u,vectorField uw,vectorField r,float Re,float
         int elements = NXSIZE*NY*NZ;
 
         // Operate over N*N*(N/2+1) matrix
-        threadsPerBlock.x=128;
+        threadsPerBlock.x=THREADSPERBLOCK_NU;
 
         blocksPerGrid.x=(elements+threadsPerBlock.x-1)/threadsPerBlock.x;
 

@@ -95,6 +95,10 @@ const int num_colors4 = sizeof(colors4)/sizeof(uint32_t);
 #define RES 2.0f
 #endif
 
+#ifndef THREADSPERBLOCK_NU
+#define THREADSPERBLOCK_NU 512
+#endif
+
 typedef struct { float2* x;float2* y;float2* z;} vectorField;
 
 /* 
