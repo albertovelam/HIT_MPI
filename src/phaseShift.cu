@@ -1,4 +1,4 @@
-#include "turH_cuda.h"
+#include "turH.h"
 
 
 static __global__ void shift_kernel(float2* tx,float2* ty,float2* tz,float Delta_1,float Delta_2,float Delta_3,int IGLOBAL,int NXSIZE)

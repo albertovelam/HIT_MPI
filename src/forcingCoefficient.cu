@@ -1,4 +1,4 @@
-#include "turH_cuda.h"
+#include "turH.h"
 
 extern int SMCOUNT;
 

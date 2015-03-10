@@ -1,5 +1,4 @@
-
-#include "turH_cuda.h"
+#include "turH.h"
 
 static __global__ void convolution_rotor_3(float2* wx,float2* wy,float2* wz,float2* ux,float2* uy,float2* uz, int elements)
 {

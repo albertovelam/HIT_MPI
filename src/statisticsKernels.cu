@@ -1,5 +1,4 @@
-
-#include "turH_cuda.h"
+#include "turH.h"
 
 static __global__ void calcEkernel(float2* ux,float2* uy,float2* uz,float2* t,int IGLOBAL,int NXSIZE)
 {
