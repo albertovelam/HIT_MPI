@@ -134,7 +134,7 @@ static float calcDt(vectorField uw,float Cf){
 	float dtf=0.0f;
 	float dtv=0.0f;	
 	
-	float N3= (float) N*N*N;
+	float N3= float(NX)*float(NY)*float(NZ);
 #if 0
         float* uwx = (float*)malloc(2*NXSIZE*NY*NZ*sizeof(float));
         float* uwy = (float*)malloc(2*NXSIZE*NY*NZ*sizeof(float));

@@ -17,7 +17,7 @@ static __global__ void normalize_kernel(float2* ux,float2* uy,float2* uz,int IGL
 
 	int h=i*NY*NZ+j*NZ+k;
 
-	float N3=(float)N*N*N;
+	float N3= float(NX)*float(NY)*float(NZ);
 
 	// Read {u1,u2,u3}	
 	
@@ -62,7 +62,7 @@ static __global__ void calcUU_kernel(float2* uxx,float2* uyy,float2* uzz,int IGL
 
 	int h=i*NY*NZ+j*NZ+k;
 
-	float N3=(float)N*N*N;
+	float N3=float(NX)*float(NY)*float(NZ);
 
 	// Read {u1,u2,u3}	
 	
@@ -111,7 +111,7 @@ static __global__ void calcUV_kernel(float2* uxx,float2* uyy,float2* uzz,int IGL
 
 	int h=i*NY*NZ+j*NZ+k;
 
-	float N3=(float)N*N*N;
+	float N3=float(NX)*float(NY)*float(NZ);
 
 	// Read {u1,u2,u3}	
 	
@@ -159,7 +159,7 @@ static __global__ void calcSii_kernel(float2* ux,float2* uy,float2* uz,int IGLOB
 
 	int h=i*NY*NZ+j*NZ+k;
 
-	float N3=(float)N*N*N;
+	float N3=float(NX)*float(NY)*float(NZ);
 	
 
 	// Read {u1,u2,u3}	
@@ -223,7 +223,7 @@ static __global__ void calcSij_kernel(float2* ux,float2* uy,float2* uz,int IGLOB
 
 	int h=i*NY*NZ+j*NZ+k;
 
-	float N3=(float)N*N*N;
+	float N3=float(NX)*float(NY)*float(NZ);
 	
 
 	// Read {u1,u2,u3}	
@@ -285,7 +285,7 @@ static __global__ void calc_dTau_kernel(float2* ux,float2* uy,float2* uz,int mod
 
 	int h=i*NY*NZ+j*NZ+k;
 
-	float N3=(float)N*N*N;
+	float N3=float(NX)*float(NY)*float(NZ);
 	
 
 	// Read {u1,u2,u3}	
@@ -373,8 +373,6 @@ static __global__ void gaussFilter_kernel(float2* uxx,float2* uyy,float2* uzz,fl
 
 	int h=i*NY*NZ+j*NZ+k;
 
-	float N3=(float)N*N*N;
-	
 
 	// Read {u1,u2,u3}	
 	float k1;
@@ -435,9 +433,6 @@ static __global__ void gaussFilter_High_kernel(float2* uxx,float2* uyy,float2* u
 
 	int h=i*NY*NZ+j*NZ+k;
 
-	float N3=(float)N*N*N;
-	
-
 	// Read {u1,u2,u3}	
 	float k1;
 	float k2;
@@ -497,24 +492,6 @@ static __global__ void calcL_kernel(float2* A1,float2* A2,float2* A3,float2* B1,
 	{
 
 	int h=i*NY*NZ+j*NZ+k;
-
-	float N3=(float)N*N*N;
-	
-
-	// Read {u1,u2,u3}	
-	float k1;
-	float k2;
-	float k3;
-	
-	// X indices		
-	k1=(i+IGLOBAL)<NX/2 ? (float)(i+IGLOBAL) : (float)(i+IGLOBAL)-(float)NX ;
-
-	// Y indice
-	k2=j<NY/2 ? (float)j : (float)j-(float)NY ;
-	
-	// Z indices
-	k3=(float)k;
-
 	
 	float2 L11=B1[h];
 	float2 L12=B2[h];
@@ -561,23 +538,6 @@ static __global__ void calc_tauS_kernel(float2* OUT,float2* Ax,float2* Ay,float2
 	{
 
 	int h=i*NY*NZ+j*NZ+k;
-
-	float N3=(float)N*N*N;
-	
-
-	// Read {u1,u2,u3}	
-	float k1;
-	float k2;
-	float k3;
-	
-	// X indices		
-	k1=(i+IGLOBAL)<NX/2 ? (float)(i+IGLOBAL) : (float)(i+IGLOBAL)-(float)NX ;
-
-	// Y indice
-	k2=j<NY/2 ? (float)j : (float)j-(float)NY ;
-	
-	// Z indices
-	k3=(float)k;
 
 	float2 L1=Ax[h];
 	float2 L2=Ay[h];

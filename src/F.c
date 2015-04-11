@@ -29,7 +29,7 @@ float Fdt( vectorField u, vectorField r,float* Delta,float Cf)
         float dtf=0.0f;
         float dtv=0.0f;
 
-        float N3= (float) N*(float)N*(float)N;
+        float N3= float(NX)*float(NY)*float(NZ);
 
 START_RANGE("calc_u_w",1)
         calc_U_W(u,r);
@@ -108,8 +108,8 @@ START_RANGE("REDUCE",4)
 END_RANGE
         float c=(fabs(umax[0]/N3)+fabs(umax[1]/N3)+fabs(umax[2]/N3));
 
-        dtc=cfl/((N/3.0f)*c);
-        dtv=cfl*REYNOLDS/((N/3.0f)*(N/3.0f));
+        dtc=cfl/((NX/3.0f)*c);
+        dtv=cfl*REYNOLDS/((NX/3.0f)*(NX/3.0f));
         dtf=cfl/Cf;
 
         if(RANK == 0 /*&& counter%10==0*/){

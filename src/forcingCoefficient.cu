@@ -308,7 +308,7 @@ static __global__ void calcEnergyShellKernel2(float2* ux,float2* uy,float2* uz,f
     float k2=j<NY/2 ? (float)j : (float)j-(float)NY ;
     float k3=(float)k;
     float kk=k1*k1+k2*k2+k3*k3;
-    float N3=(float)N*(float)N*(float)N;
+    float N3=float(NX)*float(NY)*float(NZ);
     int h = i*NY*NZ+j*NZ+k;
 
     float2 u1,u2,u3;
@@ -357,7 +357,7 @@ static __global__ void calcEnergyShellKernel(float2* ux,float2* uy,float2* uz,fl
 	float k1,k2,k3;
 	float kk;
 
-	float N3=(float)N*(float)N*(float)N;
+	float N3=float(NX)*float(NY)*float(NZ);
 
 	
 	int h=i*NY*NZ+j*NZ+k;
