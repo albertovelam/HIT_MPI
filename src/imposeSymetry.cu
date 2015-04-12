@@ -4,28 +4,21 @@ static __global__ void normalize_kernel(float2* t1,float2* t2,float2* t3,int IGL
 {
 
 	
-	int h  = blockIdx.x * blockDim.x + threadIdx.x;
+  int h  = blockIdx.x * blockDim.x + threadIdx.x;
 	
-	//if(i<NXSIZE &&  j<NY && k<NZ )
-        if( h < (NXSIZE*NY*NZ) )
-	{
-
+  //if(i<NXSIZE &&  j<NY && k<NZ )
+  if( h < (NXSIZE*NY*NZ) )
+    {	
+      float N3=float(NX)*float(NY)*float(NZ);	
 	
-	float N3=(float)N*(float)N*(float)N;	
-	
-	t1[h].x/=N3;
-	t2[h].x/=N3;
-	t3[h].x/=N3;
-
-	t1[h].y/=N3;
-	t2[h].y/=N3;
-	t3[h].y/=N3;
-
-		
-
-
-	}
-
+      t1[h].x/=N3;
+      t2[h].x/=N3;
+      t3[h].x/=N3;
+      
+      t1[h].y/=N3;
+      t2[h].y/=N3;
+      t3[h].y/=N3;
+    }
 }
 
 
