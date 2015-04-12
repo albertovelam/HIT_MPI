@@ -6,7 +6,7 @@ static __global__ void convolution_rotor_3(float2* wx,float2* wy,float2* wz,floa
 
         int h  = blockIdx.x * blockDim.x + threadIdx.x;
 
-        float N3=(float) N* (float) N* (float)N;
+        float N3= float(NX)*float(NY)*float(NZ);
 
         float2 m3;
 
@@ -55,7 +55,7 @@ static __global__ void convolution_rotor_12(float2* wx,float2* wy,float2* wz,flo
 
 
 	int h  = blockIdx.x * blockDim.x + threadIdx.x;
-        float N3=(float) N* (float) N* (float)N;
+        float N3= float(NX)*float(NY)*float(NZ);
 
 	float2 m1;
 	float2 m2;
@@ -90,23 +90,7 @@ static __global__ void convolution_rotor_12(float2* wx,float2* wy,float2* wz,flo
         w1.y=w1.y/N3;
         w2.y=w2.y/N3;
         w3.y=w3.y/N3;
-/*
-	u1.x=u1.x*oN3;
-	u2.x=u2.x*oN3;
-	u3.x=u3.x*oN3;
 
-	u1.y=u1.y*oN3;
-	u2.y=u2.y*oN3;
-	u3.y=u3.y*oN3;
-
-	w1.x=w1.x*oN3;
-	w2.x=w2.x*oN3;
-	w3.x=w3.x*oN3;
-		
-	w1.y=w1.y*oN3;
-	w2.y=w2.y*oN3;
-	w3.y=w3.y*oN3;
-*/	
 	// Calculate the first and second component of the convolution rotor
 
 	m1.x=u2.x*w3.x-u3.x*w2.x;

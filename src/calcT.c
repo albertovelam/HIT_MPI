@@ -228,7 +228,7 @@ float calc_T(vectorField u,vectorField A,vectorField B,float2* aux,float alpha)
 
 	float udTau=udTau_1+udTau_2+udTau_3;	
 
-	float T=(udTau-uuS)/((float)N*N*N);
+	float T=(udTau-uuS)/(float(NX)*float(NY)*float(NZ));
 
 	if(RANK==0){
 	printf("\nudTau=(%e,%e,%e)",udTau_1,udTau_2,udTau_3);
@@ -252,7 +252,7 @@ float calc_tauS(vectorField u,vectorField A,vectorField B,float2* aux,float alph
 		
 	tauS_2=sumElements(aux);
 		
-	float tauS=(tauS_1+2.0f*tauS_2)/((float)N*N*N);
+	float tauS=(tauS_1+2.0f*tauS_2)/(float(NX)*float(NY)*float(NZ));
 	
 	return tauS;		
 	
